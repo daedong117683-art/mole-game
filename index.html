@@ -14,7 +14,7 @@
 <style>
 /* Layout: one-screen garden — sky header with player + score signs, 3x3 dirt holes on grass; player picker and results as wooden-sign cards */
 :root{
-  --sky:#bfe6ff; --grass:#7cc95a; --grass-dark:#4f9a35; --dirt:#6b3f22; --dirt-dark:#3d2312;
+  --sky:#bfe6ff; --sky2:#bfe6ff; --grass:#7cc95a; --grass-dark:#4f9a35; --dirt:#6b3f22; --dirt-dark:#3d2312;
   --mole:#a8703f; --nose:#ff7aa2; --sign:#fff6d6; --sign-2:#ffe9a8; --ink:#3a2a1a; --gold:#ffc83d;
   --red:#ff6b4a; --red-dark:#c1432a; --blue:#4aa8ff; --blue-dark:#2a74c1;
   --pink:#ff2fa6; --pink-glow:rgba(255,47,166,.85); --ice:#bfefff; --coin:#f5b400; --angry:#d9543a; --skull-glow:#b04bff;
@@ -22,10 +22,10 @@
   color-scheme:light;
 }
 html{height:100%}body{height:calc(100% - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
-body{background:linear-gradient(var(--sky) 0 22%, var(--grass) 22% 100%);color:var(--ink);font-family:var(--font);
+body{background:linear-gradient(var(--sky2) 0%, var(--sky) 22%, var(--grass) 22%, var(--grass) 100%);transition:background .4s;color:var(--ink);font-family:var(--font);
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
   padding-block:12px;box-sizing:border-box;overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:manipulation}
-.layout{height:100%;max-width:880px;margin:0 auto;display:flex;gap:24px;justify-content:center}
+.layout{position:relative;z-index:1;height:100%;max-width:880px;margin:0 auto;display:flex;gap:24px;justify-content:center}
 .wrap{flex:1;min-width:0;max-width:520px;height:100%;display:flex;flex-direction:column;gap:12px}
 .board{display:none;flex:0 0 280px;align-self:center;max-height:calc(100% - 20px);flex-direction:column;background:var(--sign);border:5px solid var(--dirt);border-radius:22px;padding:14px 14px 12px;box-shadow:0 6px 0 var(--dirt-dark);box-sizing:border-box;position:relative}
 .board::before,.board::after{content:"";position:absolute;top:-22px;width:12px;height:22px;background:var(--dirt);border-radius:4px 4px 0 0}
@@ -87,6 +87,46 @@ h1{margin:0;font-weight:400;font-size:clamp(24px,7vw,36px);color:#fff;text-shado
 .pop.boom{font-size:clamp(26px,7vw,40px);text-shadow:0 2px 0 #2b0d3d,0 0 12px var(--skull-glow)}
 .pop.miss{font-size:clamp(16px,4.5vw,22px);color:var(--sign)}
 @keyframes pop{to{top:-20%;opacity:0}}
+/* 세계 장식 · 떨어지는 효과 */
+.fx,.deco{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0}
+.deco span{position:absolute;line-height:1;filter:drop-shadow(0 3px 0 rgba(0,0,0,.15))}
+.deco .star{width:3px;height:3px;border-radius:50%;background:#fff;filter:none;animation:twinkle 1.6s ease-in-out infinite alternate}
+@keyframes twinkle{from{opacity:.2}to{opacity:1}}
+.pt{position:absolute;top:-40px;line-height:1;animation:fall linear forwards}
+.pt.up{top:auto;bottom:-30px;animation-name:rise}
+.pt.sprinkle{width:5px;height:14px;border-radius:3px}
+@keyframes fall{to{transform:translateY(112vh) rotate(260deg)}}
+@keyframes rise{to{transform:translateY(-112vh);opacity:0}}
+/* 세계별 두더지 */
+.w-candy .critter.gold{background:#ff8fc8;box-shadow:0 0 16px #ff8fc8,inset 0 -8px 0 rgba(0,0,0,.1)}
+.w-candy .critter.gold::before{content:"🍩";position:absolute;top:-30%;left:50%;transform:translateX(-50%);font-size:clamp(18px,5vw,30px);line-height:1}
+.w-ice .critter{transition-duration:.08s}
+.w-ice .critter.mole::after{content:"";position:absolute;left:2%;right:2%;bottom:16%;height:11%;background:#e63946;border-radius:6px;box-shadow:0 2px 0 rgba(0,0,0,.15)}
+.w-lava .critter.mole:not(.angry)::after{content:"";position:absolute;top:21%;left:22%;width:56%;height:6%;border-radius:4px;background:linear-gradient(to right,#ff3b1f 0 36%,transparent 36% 64%,#ff3b1f 64%)}
+.w-lava .critter.mole{box-shadow:0 0 12px rgba(255,90,31,.6),inset 0 -8px 0 rgba(0,0,0,.2)}
+.w-lava .hole::after{animation:lava 1.2s ease-in-out infinite alternate}
+@keyframes lava{to{filter:brightness(1.35)}}
+.w-space .critter.mole::after{content:"";position:absolute;inset:-9% -9% 12%;border:3px solid rgba(210,235,255,.9);border-radius:50%;background:rgba(180,220,255,.16);box-shadow:inset 6px 6px 0 rgba(255,255,255,.25)}
+.critter.fire{background:none;box-shadow:none;filter:drop-shadow(0 0 10px #ff7a1a)}
+/* 홈 (세계 지도) */
+.card.home{max-width:460px}
+.homebar{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;font-size:18px;margin-bottom:10px}
+.worlds{display:grid;gap:10px}
+.wd{position:relative;display:grid;grid-template-columns:64px 1fr auto;align-items:center;gap:10px;width:100%;border:4px solid var(--dirt);border-radius:18px;padding:10px 12px;box-shadow:0 4px 0 var(--dirt-dark);font-family:var(--font);color:var(--ink);text-align:left;cursor:pointer;min-width:0}
+.wd .wic{font-size:44px;line-height:1;text-align:center;filter:drop-shadow(0 3px 0 rgba(0,0,0,.18))}
+.wd .wtx{min-width:0;display:flex;flex-direction:column;gap:2px}
+.wd .wnm{font-size:22px;background:rgba(255,255,255,.88);border-radius:10px;padding:0 8px;justify-self:start;width:max-content;max-width:100%}
+.wd .wst{font-size:15px;background:rgba(255,255,255,.75);border-radius:8px;padding:0 8px;width:max-content;max-width:100%}
+.wd .wgo{font-size:18px;background:var(--red);color:#fff;border-radius:12px;padding:6px 12px;box-shadow:0 3px 0 var(--red-dark);white-space:nowrap}
+.wd.lock .wic{filter:grayscale(1) opacity(.6)}
+.wd.lock .wgo{background:var(--blue);box-shadow:0 3px 0 var(--blue-dark)}
+.wd.lock.poor .wgo{background:#cfc4a8;box-shadow:0 3px 0 #a99f86;font-size:15px}
+.wd.lock.ask .wgo{background:var(--red);box-shadow:0 3px 0 var(--red-dark)}
+.wd.cur{border-color:var(--red)}
+.wd:focus-visible{outline:4px solid var(--ink);outline-offset:3px}
+.wd:active{transform:translateY(3px);box-shadow:0 1px 0 var(--dirt-dark)}
+.stars{color:var(--coin);letter-spacing:1px}
+.stars i{font-style:normal;opacity:.3;filter:grayscale(1)}
 .itembar{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;min-height:52px;align-items:center}
 .itm{font-family:var(--font);font-size:17px;color:var(--ink);background:var(--sign);border:3px solid var(--dirt);border-radius:14px;padding:4px 10px;min-height:48px;box-shadow:0 3px 0 var(--dirt-dark);display:flex;align-items:center;gap:5px;cursor:pointer}
 .itm .ic{font-size:26px;line-height:1}
@@ -166,11 +206,12 @@ h1{margin:0;font-weight:400;font-size:clamp(24px,7vw,36px);color:#fff;text-shado
 .rank .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .rank .pt{font-variant-numeric:tabular-nums}
 @media (prefers-reduced-motion:reduce){.critter{transition:none}.pop{animation-duration:.01s}.ani.on{transform:none}
-  .critter.angry,.field.quake,.hole.danger::before,.sign.zero,.vein,.itm.on,.field.zap,.it.bought,.coinpop{animation:none}}
+  .pt,.deco .star,.w-lava .hole::after,.critter.angry,.field.quake,.hole.danger::before,.sign.zero,.vein,.itm.on,.field.zap,.it.bought,.coinpop{animation:none}}
 </style>
 </head>
 <body>
 
+<div class="deco" id="deco" aria-hidden="true"></div><div class="fx" id="fx" aria-hidden="true"></div>
 <div class="layout">
 <div class="wrap">
   <div class="top">
@@ -187,8 +228,8 @@ h1{margin:0;font-weight:400;font-size:clamp(24px,7vw,36px);color:#fff;text-shado
   <div class="itembar" id="bar" aria-label="아이템"></div>
 </div>
 <aside class="board" aria-label="친구별 최고 기록판">
-  <h3>🏆 최고 기록판</h3>
-  <p class="sub">친구별 최고 점수</p>
+  <h3 id="boardTitle">🏆 최고 기록판</h3>
+  <p class="sub" id="boardSub">친구별 최고 점수</p>
   <ol id="boardList"></ol>
 </aside>
 </div>
@@ -213,21 +254,69 @@ const ITEMS=[
 ];
 const IT=Object.fromEntries(ITEMS.map(i=>[i.id,i]));
 const isMole=k=>k==='mole'||k==='gold'||k==='tiny';
-function fix(p){if(typeof p.coins!=='number')p.coins=0;p.items=Object.assign({bolt:0,slow:0,ice:0,big:0,shield:0,time:0},p.items||{});return p}
+/* ---------- 세계 ---------- */
+const SK3=[[3,9],[11,18],[20,26]];
+const WORLDS={
+  grass:{nm:'풀밭세계',ic:'🌱',price:0,sky2:'#bfe6ff',sky:'#bfe6ff',grass:'#7cc95a',gd:'#4f9a35',dirt:'#6b3f22',dd:'#3d2312',mole:'#a8703f',
+    deco:[],fx:null,prob:{tiny:.06,gold:.11,bad:.14},stay:1,spawn:1,skulls:SK3,bad:{ic:'🐝',pen:2,cls:'bee'},twist:'기본 규칙이에요.'},
+  candy:{nm:'과자세계',ic:'🍭',price:5,sky2:'#ffb8e0',sky:'#ffe0f1',grass:'#8b5a3c',gd:'#5e3a24',dirt:'#e0a868',dd:'#7a4a22',mole:'#d99a4e',
+    deco:[['🍭',4,3,34],['🍪',88,6,30],['🧁',76,1,28],['🍬',14,12,24],['🍩',94,15,24]],fx:{type:'fall',items:'sprinkle',every:380},
+    prob:{tiny:.06,gold:.24,bad:.14},stay:1,spawn:1,skulls:SK3,bad:{ic:'🐝',pen:2,cls:'bee'},twist:'🍩 도넛 두더지(3점)가 자주 나와요!'},
+  ice:{nm:'얼음세계',ic:'❄️',price:10,sky2:'#a9def7',sky:'#e3f6ff',grass:'#f4fbff',gd:'#5aa9cf',dirt:'#a7dcf2',dd:'#2f7fa8',mole:'#f3f1ec',
+    deco:[['⛄',5,4,34],['🏔️',86,2,38],['🌲',73,8,26],['❄️',18,12,20]],fx:{type:'fall',items:['❄️','❄','✻'],every:420},
+    prob:{tiny:.06,gold:.11,bad:.14},stay:.8,spawn:1,skulls:SK3,bad:{ic:'🐝',pen:2,cls:'bee'},twist:'두더지가 미끄러지듯 빨리 들어가요!'},
+  lava:{nm:'용암세계',ic:'🌋',price:15,sky2:'#3a0d0d',sky:'#ff7a3d',grass:'#2b2321',gd:'#120d0c',dirt:'#4a3a36',dd:'#ff5a1f',mole:'#3d3434',
+    deco:[['🌋',6,3,40],['🌋',84,6,30],['🔥',20,13,20],['🔥',72,14,18]],fx:{type:'rise',items:['🔥','•','✦'],every:360},
+    prob:{tiny:.06,gold:.11,bad:.16},stay:.95,spawn:.95,skulls:[[3,8],[10,15],[17,22],[23,27]],bad:{ic:'🔥',pen:3,cls:'fire'},twist:'🔥 불덩이는 -3점! 💀 해골이 4번 나와요!'},
+  space:{nm:'우주세계',ic:'🚀',price:20,sky2:'#05061a',sky:'#1a1f4d',grass:'#a3a5b4',gd:'#5f6170',dirt:'#85879a',dd:'#23242f',mole:'#a8703f',
+    deco:[['🪐',6,3,34],['🌙',86,4,32],['🛸',72,13,24],['⭐',22,13,16]],stars:true,fx:{type:'fall',items:['✨','☄️'],every:900},
+    prob:{tiny:.12,gold:.11,bad:.14},stay:.85,spawn:.85,skulls:SK3,bad:{ic:'🐝',pen:2,cls:'bee'},twist:'⭐ 꼬마 두더지가 2배 자주! 대신 제일 빨라요!'}
+};
+const WORLD_IDS=Object.keys(WORLDS);
+let curWorld='grass';
+const W=()=>WORLDS[curWorld];
+const starCount=b=>b>=30?3:b>=20?2:b>=10?1:0;
+const starsHtml=n=>`<span class="stars" aria-label="별 ${n}개">${'⭐'.repeat(n)}${'<i>⭐</i>'.repeat(3-n)}</span>`;
+const wBest=(p,w=curWorld)=>(p.bests&&p.bests[w])||0;
+let fxTimer=null;
+function applyWorld(id){
+  curWorld=WORLDS[id]?id:'grass';const w=W(),r=document.documentElement.style;
+  [['--sky2',w.sky2],['--sky',w.sky],['--grass',w.grass],['--grass-dark',w.gd],['--dirt',w.dirt],['--dirt-dark',w.dd],['--mole',w.mole]].forEach(([k,v])=>r.setProperty(k,v));
+  WORLD_IDS.forEach(k=>document.body.classList.toggle('w-'+k,k===curWorld));
+  const deco=$('deco');
+  deco.innerHTML=w.deco.map(([e,x,y,sz])=>`<span style="left:${x}%;top:${y}%;font-size:${sz}px">${e}</span>`).join('')+
+    (w.stars?Array.from({length:40},()=>`<span class="star" style="left:${Math.random()*100}%;top:${Math.random()*100}%;animation-delay:${(Math.random()*1.6).toFixed(2)}s"></span>`).join(''):'');
+  clearInterval(fxTimer);$('fx').innerHTML='';
+  const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(w.fx&&!reduce)fxTimer=setInterval(()=>spawnFx(w.fx),w.fx.every);
+  const m=document.querySelector('meta[name=theme-color]');if(m)m.content=w.sky2;
+  renderBoard();
+}
+const SPRINKLE=['#ff5c8a','#ffd23f','#5ec8ff','#7be07b','#b98cff','#fff'];
+function spawnFx(f){
+  const fx=$('fx');if(fx.childElementCount>28||document.hidden)return;
+  const s=document.createElement('span');s.className='pt'+(f.type==='rise'?' up':'');
+  if(f.items==='sprinkle'){s.classList.add('sprinkle');s.style.background=rnd(SPRINKLE)}
+  else{s.textContent=rnd(f.items);s.style.fontSize=(12+Math.random()*14)+'px';if(f.type==='rise')s.style.color='#ffb347'}
+  s.style.left=(Math.random()*100)+'%';const d=4+Math.random()*4;s.style.animationDuration=d+'s';
+  fx.appendChild(s);setTimeout(()=>s.remove(),d*1000+100);
+}
+function fix(p){if(typeof p.coins!=='number')p.coins=0;if(!p.bests)p.bests={grass:p.best||0};if(!p.bestItems)p.bestItems={grass:!!p.bestItem};if(!Array.isArray(p.worlds))p.worlds=['grass'];p.items=Object.assign({bolt:0,slow:0,ice:0,big:0,shield:0,time:0},p.items||{});return p}
 
 /* ---------- 저장 (이 기기에만 저장) ---------- */
-function load(){try{const d=JSON.parse(localStorage.getItem('molePlayers')||'{}');players=(Array.isArray(d.players)?d.players:[]).map(fix);cur=d.cur||null}catch(e){players=[]}
+function load(){try{const d=JSON.parse(localStorage.getItem('molePlayers')||'{}');players=(Array.isArray(d.players)?d.players:[]).map(fix);cur=d.cur||null;curWorld=WORLDS[d.world]?d.world:'grass'}catch(e){players=[]}
   if(!players.find(p=>p.id===cur))cur=null}
-function save(){try{localStorage.setItem('molePlayers',JSON.stringify({players,cur}))}catch(e){}}
+function save(){try{localStorage.setItem('molePlayers',JSON.stringify({players,cur,world:curWorld}))}catch(e){}}
 const me=()=>players.find(p=>p.id===cur);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-function refreshTop(){const p=me();$('whoAv').textContent=p?p.emoji:'🙂';$('whoNm').textContent=p?p.name:'플레이어';bestEl.textContent=p?p.best:0;coinsEl.textContent=p?p.coins:0;renderBoard();renderBar()}
+function refreshTop(){const p=me();$('whoAv').textContent=p?p.emoji:'🙂';$('whoNm').textContent=p?p.name:'플레이어';bestEl.textContent=p?wBest(p):0;coinsEl.textContent=p?p.coins:0;renderBoard();renderBar()}
 function renderBoard(){
-  const el=$('boardList');
+  const el=$('boardList'),w=W();
+  $('boardTitle').textContent='🏆 '+w.ic+' 최고 기록판';$('boardSub').textContent=w.nm+' 친구별 최고 점수';
   if(!players.length){el.innerHTML='<li class="empty" style="display:block;border:0;background:none">아직 친구가 없어요.<br>새 친구를 만들고<br>첫 기록을 세워 봐요!</li>';return}
-  const ranked=[...players].sort((a,b)=>b.best-a.best||a.name.localeCompare(b.name));
-  el.innerHTML=ranked.map((q,i)=>`<li class="${q.id===cur?'me':''}${i===0&&q.best>0?' top1':''}"><span class="medal">${q.best>0&&MEDALS[i]?MEDALS[i]:i+1}</span><span class="av">${q.emoji}</span><span class="nm">${esc(q.name)}<small>${q.plays||0}번 · 🪙${q.coins||0}${q.bestItem?' · ⚡아이템':''}</small></span><span class="pt">${q.best}<small>점</small></span></li>`).join('');
+  const ranked=[...players].sort((a,b)=>wBest(b)-wBest(a)||a.name.localeCompare(b.name));
+  el.innerHTML=ranked.map((q,i)=>{const b=wBest(q),it=q.bestItems&&q.bestItems[curWorld];return `<li class="${q.id===cur?'me':''}${i===0&&b>0?' top1':''}"><span class="medal">${b>0&&MEDALS[i]?MEDALS[i]:i+1}</span><span class="av">${q.emoji}</span><span class="nm">${esc(q.name)}<small>${starsHtml(starCount(b))} · 🪙${q.coins||0}${it?' · ⚡':''}</small></span><span class="pt">${b}<small>점</small></span></li>`}).join('');
 }
 
 /* ---------- 구멍 ---------- */
@@ -266,11 +355,11 @@ const face=(m,top)=>`<svg viewBox="0 0 100 100"${top?' preserveAspectRatio="xMid
 /* ---------- 나오기 / 숨기 ---------- */
 function show(h,kind){
   h.kind=kind;h.hit=false;let cls='critter ',html='';
-  if(kind==='bee'){cls+='bee';html='🐝'}
+  if(kind==='bee'){cls+=W().bad.cls;html=W().bad.ic}
   else if(kind==='skull'){cls+='skull';html='💀';h.el.classList.add('danger')}
   else{cls+='mole'+(kind==='gold'?' gold':kind==='tiny'?' tiny':'');html=kind==='tiny'?face('happy',1):face(rnd(MOOD_LIST))}
   h.c.className=cls;h.c.innerHTML=html;h.el.classList.add('up');
-  const base=Math.max(650,1300-(30-time)*20);
+  const base=Math.max(650,1300-(30-time)*20)*W().stay;
   let stay=kind==='tiny'?Math.max(700,base*.8):kind==='skull'?1400:base;
   const now=Date.now();
   if(isMole(kind)){if(now<slowUntil)stay*=2;if(now<iceUntil)stay+=iceUntil-now}
@@ -279,8 +368,8 @@ function show(h,kind){
 function popUp(){
   if(!playing)return;
   const free=holes.filter(h=>!h.kind);
-  if(free.length){const r=Math.random();show(rnd(free),r<.06?'tiny':r<.17?'gold':r<.31?'bee':'mole')}
-  timers.push(setTimeout(popUp,Math.max(380,800-(30-time)*14)*(0.6+Math.random()*0.6)));
+  if(free.length){const r=Math.random(),pr=W().prob;show(rnd(free),r<pr.tiny?'tiny':r<pr.tiny+pr.gold?'gold':r<pr.tiny+pr.gold+pr.bad?'bee':'mole')}
+  timers.push(setTimeout(popUp,Math.max(380,800-(30-time)*14)*W().spawn*(0.6+Math.random()*0.6)));
 }
 function spawnSkull(){
   if(!playing)return;
@@ -309,7 +398,7 @@ function whack(i,e){
     else{score=0;float(h,'점수 0!','boom');skullFx()}
     hide(h);
   }
-  else if(h.kind==='bee'){score=Math.max(0,score-2);float(h,'앗! -2');tone(160,.3,'sawtooth');hide(h)}
+  else if(h.kind==='bee'){const pen=W().bad.pen;score=Math.max(0,score-pen);float(h,(pen>2?'앗 뜨거! -':'앗! -')+pen);tone(160,.3,'sawtooth');hide(h)}
   scoreEl.textContent=score;
 }
 function hitMole(h,quiet){
@@ -379,7 +468,9 @@ function useItem(id){
 const hasPre=p=>p.items.big>0||p.items.time>0;
 
 /* ---------- 화면: 상점 ---------- */
-function showShop(boughtId){
+let shopBack=null;
+function showShop(boughtId,back){
+  if(back)shopBack=back;card.classList.remove('home');
   const p=me();if(!p)return showPicker();
   overlay.hidden=false;
   card.innerHTML=`<h2>🏪 두더지 상점</h2>
@@ -397,7 +488,7 @@ function showShop(boughtId){
     [784,988,1319].forEach((f,k)=>setTimeout(()=>tone(f,.1,'triangle',.09),k*70));
     showShop(it.id);
   });
-  $('back').onclick=showIntro;
+  $('back').onclick=()=>(shopBack||showHome)();
   (boughtId&&$('buy-'+boughtId)||$('back')).focus();
 }
 
@@ -406,15 +497,16 @@ function showPicker(){
   askDel=null;overlay.hidden=false;
   const tiles=players.map(p=>`
     <div class="pl-wrap">
-      <button class="pl${p.id===cur?' on':''}" data-pick="${p.id}"><span class="av">${p.emoji}</span><span class="nm">${esc(p.name)}</span><span class="bs">최고 ${p.best}점 · 🪙${p.coins}</span></button>
+      <button class="pl${p.id===cur?' on':''}" data-pick="${p.id}"><span class="av">${p.emoji}</span><span class="nm">${esc(p.name)}</span><span class="bs">⭐${WORLD_IDS.reduce((n,w)=>n+starCount(wBest(p,w)),0)} · 🪙${p.coins}</span></button>
       <button class="del" data-del="${p.id}" aria-label="${esc(p.name)} 지우기">✕</button>
     </div>`).join('');
+  card.classList.remove('home');
   card.innerHTML=`<h2>누가 할까요?</h2>
     <p>${players.length?'내 이름을 눌러요!':'먼저 친구를 만들어요!'}</p>
     <div class="players">${tiles}
       <div class="pl-wrap"><button class="pl add" id="addBtn"><span class="av">➕</span><span class="nm">새 친구</span></button></div>
     </div>`;
-  card.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{cur=b.dataset.pick;save();refreshTop();showIntro()});
+  card.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{cur=b.dataset.pick;if(!me().worlds.includes(curWorld))applyWorld('grass');save();refreshTop();showHome()});
   card.querySelectorAll('[data-del]').forEach(b=>b.onclick=e=>{
     e.stopPropagation();const id=b.dataset.del;
     if(askDel===id){players=players.filter(p=>p.id!==id);if(cur===id)cur=null;save();refreshTop();showPicker();return}
@@ -445,7 +537,7 @@ function showAdd(){
     if(!name){$('err').textContent='이름을 써 주세요!';inp.focus();return}
     if(players.some(p=>p.name===name)){$('err').textContent='같은 이름이 벌써 있어요!';inp.focus();return}
     const p=fix({id:'p'+Date.now().toString(36),name,emoji:pick,best:0,plays:0});
-    players.push(p);cur=p.id;save();refreshTop();showIntro();
+    players.push(p);cur=p.id;applyWorld('grass');save();refreshTop();showHome();
   };
   $('ok').onclick=make;
   inp.addEventListener('keydown',e=>{if(e.key==='Enter')make()});
@@ -455,22 +547,54 @@ function showAdd(){
 /* ---------- 화면: 시작 안내 ---------- */
 function showIntro(){
   const p=me();if(!p)return showPicker();
-  overlay.hidden=false;
-  card.innerHTML=`<h2>${p.emoji} ${esc(p.name)}, 준비됐나요?</h2>
-    <p>구멍에서 나온 두더지를<br>손가락으로 콕! 눌러요.</p>
+  if(!p.worlds.includes(curWorld))return showHome();
+  const w=W(),b=wBest(p);overlay.hidden=false;card.classList.remove('home');
+  card.innerHTML=`<h2>${w.ic} ${w.nm}</h2>
+    <p style="font-size:18px">${p.emoji} ${esc(p.name)}, 준비됐나요?</p>
+    <p style="font-size:18px;background:var(--sign-2);border-radius:12px;padding:4px 10px">${w.twist}</p>
     <div class="legend">
       <span><i class="dot" style="background:var(--mole)"></i>1점</span>
-      <span><i class="dot" style="background:var(--gold)"></i>황금 3점</span>
+      <span>${curWorld==='candy'?'🍩도넛':'<i class="dot" style="background:var(--gold)"></i>황금'} 3점</span>
       <span><i class="dot" style="background:var(--pink);width:10px;height:18px;border-radius:6px;box-shadow:0 0 6px var(--pink-glow)"></i>⭐꼬마 10점</span>
-      <span>🐝 -2점</span>
+      <span>${w.bad.ic} -${w.bad.pen}점</span>
     </div>
-    <p style="font-size:17px">💀 해골이 3번 나와요!<br>누르면 점수가 0점이 돼요!</p>
-    <p style="font-size:17px">두더지 5마리를 잡으면 🪙1개!</p>
-    <p style="font-size:16px;color:var(--dirt)">내 최고 ${p.best}점 · 내 코인 🪙${p.coins}</p>
-    ${hasPre(p)?`<p style="font-size:16px;margin-top:10px">이번 판에 쓸 아이템을 눌러 켜요</p><div class="pre">${['big','time'].filter(id=>p.items[id]>0).map(id=>`<button class="tog${selPre[id]?' on':''}" data-pre="${id}" aria-pressed="${selPre[id]}">${IT[id].ic} ${IT[id].nm} (${p.items[id]})</button>`).join('')}</div>`:''}
-    <div class="row"><button class="btn blue" id="chg">친구 바꾸기</button><button class="btn blue" id="shop">🏪 상점</button><button class="btn" id="go">시작!</button></div>`;
+    <p style="font-size:17px">💀 해골 ${w.skulls.length}번! 누르면 점수 0점 · 두더지 5마리 = 🪙1</p>
+    <p style="font-size:16px;color:var(--dirt)">내 최고 ${b}점 ${starsHtml(starCount(b))} · 🪙${p.coins}<br>⭐10점 ⭐⭐20점 ⭐⭐⭐30점</p>
+    ${hasPre(p)?`<p style="font-size:16px;margin-top:8px">이번 판에 쓸 아이템을 눌러 켜요</p><div class="pre">${['big','time'].filter(id=>p.items[id]>0).map(id=>`<button class="tog${selPre[id]?' on':''}" data-pre="${id}" aria-pressed="${selPre[id]}">${IT[id].ic} ${IT[id].nm} (${p.items[id]})</button>`).join('')}</div>`:''}
+    <div class="row"><button class="btn blue" id="home">🏠 홈</button><button class="btn blue" id="shop">🏪 상점</button><button class="btn" id="go">시작!</button></div>`;
   card.querySelectorAll('[data-pre]').forEach(b=>b.onclick=()=>{const id=b.dataset.pre;selPre[id]=!selPre[id];b.classList.toggle('on',selPre[id]);b.setAttribute('aria-pressed',selPre[id])});
-  $('go').onclick=start;$('chg').onclick=showPicker;$('shop').onclick=()=>showShop();$('go').focus();
+  $('go').onclick=start;$('home').onclick=showHome;$('shop').onclick=()=>showShop(null,showIntro);$('go').focus();
+}
+
+/* ---------- 화면: 홈 (세계 지도) ---------- */
+let askWorld=null;
+function showHome(){
+  const p=me();if(!p)return showPicker();
+  overlay.hidden=false;card.classList.add('home');
+  card.innerHTML=`<h2>🗺️ 어느 세계로 갈까요?</h2>
+    <div class="homebar"><span>${p.emoji} ${esc(p.name)}</span><span>🪙 ${p.coins}</span></div>
+    <div class="worlds">${WORLD_IDS.map(id=>{
+      const w=WORLDS[id],open=p.worlds.includes(id),b=wBest(p,id),poor=p.coins<w.price,ask=askWorld===id;
+      const bg=`linear-gradient(${w.sky2} 0%,${w.sky} 46%,${w.grass} 46%,${w.grass} 100%)`;
+      const go=open?'가기 ▶':ask?`🪙${w.price} 열기!`:poor?`🔒 🪙${w.price-p.coins}개 더`:`🔒 🪙${w.price}`;
+      return `<button class="wd${open?'':' lock'}${!open&&poor?' poor':''}${ask?' ask':''}${id===curWorld&&open?' cur':''}" data-w="${id}" style="background:${bg}">
+        <span class="wic">${w.ic}</span>
+        <span class="wtx"><span class="wnm">${w.nm}</span><span class="wst">${open?`${starsHtml(starCount(b))} 최고 ${b}점`:ask?'한 번 더 누르면 열려요':'코인으로 열 수 있어요'}</span></span>
+        <span class="wgo">${go}</span></button>`;
+    }).join('')}</div>
+    <div class="row"><button class="btn blue" id="chg">친구 바꾸기</button><button class="btn blue" id="shop">🏪 상점</button></div>`;
+  card.querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>{
+    const id=b.dataset.w,w=WORLDS[id];
+    if(p.worlds.includes(id)){askWorld=null;applyWorld(id);save();refreshTop();showIntro();return}
+    if(p.coins<w.price)return;
+    if(askWorld!==id){askWorld=id;showHome();card.querySelector(`[data-w="${id}"]`).focus();return}
+    if(!ctx){try{ctx=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}
+    p.coins-=w.price;p.worlds.push(id);askWorld=null;applyWorld(id);save();refreshTop();
+    [523,659,784,1047].forEach((f,k)=>setTimeout(()=>tone(f,.16,'triangle',.1),k*110));
+    showHome();
+  });
+  $('chg').onclick=()=>{askWorld=null;showPicker()};$('shop').onclick=()=>{askWorld=null;showShop(null,showHome)};
+  if(!askWorld)(card.querySelector('.wd.cur')||card.querySelector('.wd')).focus();
 }
 
 /* ---------- 게임 ---------- */
@@ -487,7 +611,7 @@ function start(){
   holes.forEach(h=>{clearTimeout(h.t);h.kind=null;h.hit=false;h.el.classList.remove('up','danger')});
   overlay.hidden=true;playing=true;tone(520,.1);renderBar();
   timers.push(setTimeout(popUp,500));
-  [[3,9],[11,18],[20,26]].forEach(([a,b])=>timers.push(setTimeout(spawnSkull,(a+Math.random()*(b-a))*1000)));
+  W().skulls.forEach(([a,b])=>timers.push(setTimeout(spawnSkull,(a+Math.random()*(b-a))*1000)));
   const tick=setInterval(()=>{time--;timeEl.textContent=time;if(time<=5&&time>0)tone(440,.06,'sine');if(time<=0){clearInterval(tick);end()}},1000);
   timers.push(tick);
 }
@@ -496,27 +620,30 @@ function end(){
   holes.forEach(hide);field.classList.remove('slowmo','icy');slowUntil=iceUntil=0;
   const p=me();let msg='잘했어요!';
   if(p){p.plays=(p.plays||0)+1;
-    if(score>p.best&&score>0){p.best=score;p.bestItem=usedItem;msg='새 기록이에요! 🎉'}
+    const before=wBest(p);
+    if(score>before&&score>0){p.bests[curWorld]=score;p.bestItems[curWorld]=usedItem;p.best=Math.max(p.best||0,score);msg=starCount(score)>starCount(before)?'별을 땄어요! 🌟':'새 기록이에요! 🎉'}
     else if(score>=25)msg='두더지 대장! 👑';
     save();refreshTop();}
   [523,659,784].forEach((f,k)=>setTimeout(()=>tone(f,.18,'triangle',.1),k*130));
-  const ranked=[...players].sort((a,b)=>b.best-a.best).slice(0,5);
-  const list=ranked.map((q,i)=>`<li class="${q.id===cur?'me':''}"><span class="medal">${MEDALS[i]||i+1}</span><span>${q.emoji}</span><span class="nm">${esc(q.name)}</span><span class="pt">${q.best}점${q.bestItem?' ⚡':''}</span></li>`).join('');
-  overlay.hidden=false;
+  const ranked=[...players].sort((a,b)=>wBest(b)-wBest(a)).slice(0,5);
+  const list=ranked.map((q,i)=>`<li class="${q.id===cur?'me':''}"><span class="medal">${MEDALS[i]||i+1}</span><span>${q.emoji}</span><span class="nm">${esc(q.name)}</span><span class="pt">${wBest(q)}점${q.bestItems&&q.bestItems[curWorld]?' ⚡':''}</span></li>`).join('');
+  overlay.hidden=false;card.classList.remove('home');
   card.innerHTML=`<h2>${msg}</h2>
-    <p>${p?p.emoji+' '+esc(p.name)+'의 점수':'점수'}</p>
+    <p>${W().ic} ${W().nm} · ${p?p.emoji+' '+esc(p.name):''}</p>
     <div class="big">${score}점</div>
+    <p style="font-size:26px;margin:0">${starsHtml(starCount(score))}</p>
     <p class="earn">잡은 두더지 ${catches}마리 → 🪙+${earned}</p>
     ${p?`<p style="font-size:16px;color:var(--dirt)">내 코인 🪙${p.coins}</p>`:''}
-    ${players.length>1?`<p style="font-size:18px">🏆 친구들 순위</p><ol class="rank">${list}</ol>`:''}
-    <div class="row"><button class="btn blue" id="chg">친구 바꾸기</button><button class="btn blue" id="shop">🏪 상점</button><button class="btn" id="go">한 번 더!</button></div>`;
-  $('go').onclick=()=>p&&hasPre(p)?showIntro():start();$('chg').onclick=showPicker;$('shop').onclick=()=>showShop();$('go').focus();
+    ${players.length>1?`<p style="font-size:18px">🏆 ${W().nm} 친구들 순위</p><ol class="rank">${list}</ol>`:''}
+    <div class="row"><button class="btn blue" id="home">🏠 홈</button><button class="btn blue" id="shop">🏪 상점</button><button class="btn" id="go">한 번 더!</button></div>`;
+  $('go').onclick=()=>p&&hasPre(p)?showIntro():start();$('home').onclick=showHome;$('shop').onclick=()=>showShop(null,showIntro);$('go').focus();
 }
 $('who').onclick=()=>{if(!playing)showPicker()};
 renderBar();
 
 load();refreshTop();
-me()?showIntro():showPicker();
+applyWorld(curWorld);if(me()&&!me().worlds.includes(curWorld))applyWorld('grass');refreshTop();
+me()?showHome():showPicker();
 </script>
 <script>if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}</script>
 </body>
