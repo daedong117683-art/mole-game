@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#7cc95a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>*,*::before,*::after{box-sizing:border-box}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);height:100%}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>두더지 잡기 놀이터</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&display=swap">
+<style>
+/* Layout: one-screen garden — sky header with player + score signs, 3x3 dirt holes on grass; player picker and results as wooden-sign cards */
+:root{
+  --sky:#bfe6ff; --grass:#7cc95a; --grass-dark:#4f9a35; --dirt:#6b3f22; --dirt-dark:#3d2312;
+  --mole:#a8703f; --nose:#ff7aa2; --sign:#fff6d6; --sign-2:#ffe9a8; --ink:#3a2a1a; --gold:#ffc83d;
+  --red:#ff6b4a; --red-dark:#c1432a; --blue:#4aa8ff; --blue-dark:#2a74c1;
+  --pink:#ff2fa6; --pink-glow:rgba(255,47,166,.85); --angry:#d9543a; --skull-glow:#b04bff;
+  --font:"Jua","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  color-scheme:light;
+}
+html{height:100%}body{height:calc(100% - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
+body{background:linear-gradient(var(--sky) 0 22%, var(--grass) 22% 100%);color:var(--ink);font-family:var(--font);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:12px;box-sizing:border-box;overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.layout{height:100%;max-width:880px;margin:0 auto;display:flex;gap:24px;justify-content:center}
+.wrap{flex:1;min-width:0;max-width:520px;height:100%;display:flex;flex-direction:column;gap:12px}
+.board{display:none;flex:0 0 280px;align-self:center;max-height:calc(100% - 20px);flex-direction:column;background:var(--sign);border:5px solid var(--dirt);border-radius:22px;padding:14px 14px 12px;box-shadow:0 6px 0 var(--dirt-dark);box-sizing:border-box;position:relative}
+.board::before,.board::after{content:"";position:absolute;top:-22px;width:12px;height:22px;background:var(--dirt);border-radius:4px 4px 0 0}
+.board::before{left:40px}.board::after{right:40px}
+.board h3{margin:0 0 4px;font-weight:400;font-size:26px;text-align:center}
+.board .sub{margin:0 0 10px;text-align:center;font-size:15px;color:var(--dirt)}
+.board ol{list-style:none;padding:0;margin:0;display:grid;gap:8px;overflow:auto;min-height:0}
+.board li{display:grid;grid-template-columns:30px 36px 1fr auto;align-items:center;gap:6px;background:#fff;border:3px solid var(--sign-2);border-radius:14px;padding:6px 10px;font-size:19px}
+.board li.me{border-color:var(--red);background:var(--sign-2)}
+.board li.top1{box-shadow:0 0 0 3px var(--gold)}
+.board .medal{font-size:22px;text-align:center;font-variant-numeric:tabular-nums}
+.board .av{font-size:28px;text-align:center}
+.board .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;flex-direction:column;line-height:1.15}
+.board .nm small{font-size:13px;color:var(--dirt)}
+.board .pt{font-variant-numeric:tabular-nums;font-size:22px;color:var(--red)}
+.board .pt small{font-size:14px;color:var(--ink)}
+.board .empty{text-align:center;font-size:17px;line-height:1.6;padding:18px 4px;color:var(--dirt)}
+@media (min-width:820px){.board{display:flex}}
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+h1{margin:0;font-weight:400;font-size:clamp(24px,7vw,36px);color:#fff;text-shadow:0 3px 0 var(--grass-dark),0 0 12px rgba(0,0,0,.15)}
+.who{font-family:var(--font);font-size:18px;background:var(--sign);color:var(--ink);border:3px solid var(--dirt);border-radius:999px;
+  padding:4px 12px 4px 6px;display:flex;align-items:center;gap:6px;cursor:pointer;box-shadow:0 3px 0 var(--dirt-dark);max-width:55%}
+.who .av{font-size:24px}
+.who .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.who:focus-visible{outline:4px solid #fff}
+.signs{display:flex;gap:10px;justify-content:center}
+.sign{background:var(--sign);border:4px solid var(--dirt);border-radius:14px;padding:6px 12px;text-align:center;flex:1;max-width:130px;box-shadow:0 4px 0 var(--dirt-dark)}
+.sign small{display:block;font-size:15px;color:var(--dirt)}
+.sign b{font-weight:400;font-size:28px;font-variant-numeric:tabular-nums}
+.field{flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(10px,3vw,20px);align-content:center;min-height:0}
+.hole{position:relative;aspect-ratio:1/1;max-width:100%;border:0;padding:0;background:none;cursor:pointer;overflow:hidden;border-radius:0 0 50% 50%}
+.hole:focus-visible{outline:4px solid #fff;outline-offset:2px}
+.hole::after{content:"";position:absolute;left:4%;right:4%;bottom:6%;height:30%;background:radial-gradient(ellipse at 50% 40%,var(--dirt-dark) 55%,var(--dirt) 56%);border-radius:50%;z-index:3}
+.critter{position:absolute;left:50%;bottom:-70%;width:68%;height:72%;transform:translateX(-50%);transition:bottom .15s ease-out;z-index:2;font-size:clamp(40px,13vw,72px);display:grid;place-items:center}
+.hole.up .critter{bottom:16%}
+.mole{background:var(--mole);border-radius:50% 50% 30% 30%;box-shadow:inset 0 -8px 0 rgba(0,0,0,.12)}
+.mole svg{width:100%;height:100%;display:block;pointer-events:none}
+.critter.gold{background:var(--gold);box-shadow:0 0 18px var(--gold),inset 0 -8px 0 rgba(0,0,0,.1)}
+.critter.tiny{width:26%;height:46%;bottom:-62%;border-radius:50% 50% 34% 34%/34% 34% 20% 20%;background:var(--pink);box-shadow:0 0 14px 5px var(--pink-glow),inset 0 -5px 0 rgba(0,0,0,.12)}
+.hole.up .critter.tiny{bottom:18%}
+.critter.tiny::before{content:"⭐";position:absolute;top:-24%;left:50%;transform:translateX(-50%);font-size:clamp(14px,4vw,24px);line-height:1}
+.critter.bee,.critter.skull{background:none;box-shadow:none}
+.critter.skull{filter:drop-shadow(0 0 10px var(--skull-glow))}
+.hole.danger::before{content:"";position:absolute;inset:18% 6% 6%;border-radius:50%;background:radial-gradient(var(--skull-glow),transparent 70%);z-index:1;animation:throb .45s ease-in-out infinite alternate}
+@keyframes throb{from{opacity:.35}to{opacity:1}}
+.critter.angry{background:var(--angry);box-shadow:0 0 14px var(--angry),inset 0 -8px 0 rgba(0,0,0,.15);animation:shake .09s linear 5}
+@keyframes shake{0%,100%{transform:translateX(-50%) rotate(0)}25%{transform:translateX(-57%) rotate(-7deg)}75%{transform:translateX(-43%) rotate(7deg)}}
+.vein{position:absolute;top:-8%;right:-14%;font-size:clamp(18px,6vw,34px);line-height:1;animation:vein .25s ease-out}
+.tiny .vein{font-size:clamp(12px,3.5vw,18px)}
+@keyframes vein{from{transform:scale(0)}to{transform:scale(1)}}
+.field.quake{animation:quake .07s linear 6}
+@keyframes quake{0%,100%{transform:translate(0,0)}25%{transform:translate(-7px,3px)}75%{transform:translate(7px,-3px)}}
+.sign.zero{animation:flash .3s linear 3}
+@keyframes flash{50%{background:var(--skull-glow);color:#fff}}
+.pop{position:absolute;left:50%;top:10%;transform:translateX(-50%);font-size:clamp(20px,5.5vw,30px);color:#fff;z-index:5;white-space:nowrap;text-shadow:0 2px 0 var(--ink);pointer-events:none;animation:pop .7s ease-out forwards}
+.pop.boom{font-size:clamp(26px,7vw,40px);text-shadow:0 2px 0 #2b0d3d,0 0 12px var(--skull-glow)}
+.pop.miss{font-size:clamp(16px,4.5vw,22px);color:var(--sign)}
+@keyframes pop{to{top:-20%;opacity:0}}
+
+.overlay{position:fixed;inset:0;display:grid;place-items:center;background:rgba(40,80,20,.45);z-index:10;
+  padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.card{background:var(--sign);border:5px solid var(--dirt);border-radius:24px;padding:20px 18px;text-align:center;width:100%;max-width:400px;max-height:100%;overflow:auto;box-sizing:border-box;box-shadow:0 6px 0 var(--dirt-dark)}
+.card h2{margin:0 0 8px;font-weight:400;font-size:28px}
+.card p{margin:6px 0;font-size:19px;line-height:1.5}
+.legend{display:flex;justify-content:center;gap:14px;margin:10px 0;font-size:18px;flex-wrap:wrap}
+.legend span{display:flex;align-items:center;gap:4px}
+.dot{width:22px;height:22px;border-radius:50%;display:inline-block}
+.btn{font-family:var(--font);font-size:26px;color:#fff;background:var(--red);border:0;border-radius:18px;padding:10px 30px;box-shadow:0 6px 0 var(--red-dark);cursor:pointer}
+.btn.blue{background:var(--blue);box-shadow:0 6px 0 var(--blue-dark);font-size:20px;padding:8px 18px}
+.btn:active{transform:translateY(4px);box-shadow:0 2px 0 var(--red-dark)}
+.btn.blue:active{box-shadow:0 2px 0 var(--blue-dark)}
+.btn:focus-visible,.pl:focus-visible,.ani:focus-visible{outline:4px solid var(--ink);outline-offset:3px}
+.btn:disabled{opacity:.45;cursor:default}
+.row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+.big{font-size:56px;margin:4px 0;color:var(--red)}
+
+.players{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:12px 0}
+.pl-wrap{position:relative;min-width:0}
+.pl{width:100%;font-family:var(--font);background:#fff;border:4px solid var(--dirt);border-radius:16px;padding:10px 6px 8px;cursor:pointer;color:var(--ink);box-shadow:0 4px 0 var(--dirt-dark);display:flex;flex-direction:column;align-items:center;gap:2px}
+.pl.on{background:var(--sign-2);border-color:var(--red)}
+.pl .av{font-size:40px;line-height:1}
+.pl .nm{font-size:20px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pl .bs{font-size:14px;color:var(--dirt)}
+.del{position:absolute;top:-8px;right:-8px;width:30px;height:30px;border-radius:50%;border:3px solid var(--dirt);background:var(--sign);font-family:var(--font);font-size:16px;color:var(--dirt);cursor:pointer;line-height:1}
+.del.ask{width:auto;padding:0 8px;border-radius:999px;background:var(--red);color:#fff;border-color:var(--red-dark);font-size:14px}
+.add{border-style:dashed;background:transparent;box-shadow:none;justify-content:center;min-height:96px}
+.add .av{font-size:32px}
+
+.form label{display:block;font-size:18px;margin:8px 0 6px}
+.form input{font-family:var(--font);font-size:24px;width:100%;box-sizing:border-box;padding:8px 12px;border:4px solid var(--dirt);border-radius:14px;text-align:center;background:#fff;color:var(--ink)}
+.form input:focus{outline:none;border-color:var(--red)}
+.animals{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.ani{font-size:34px;background:#fff;border:3px solid var(--dirt);border-radius:14px;padding:6px 0;cursor:pointer}
+.ani.on{background:var(--sign-2);border-color:var(--red);transform:scale(1.06)}
+.err{color:var(--red-dark);font-size:16px;min-height:20px;margin-top:6px}
+
+.rank{list-style:none;padding:0;margin:10px 0;display:grid;gap:6px;text-align:left}
+.rank li{display:grid;grid-template-columns:34px 34px 1fr auto;align-items:center;gap:6px;background:#fff;border:3px solid var(--sign-2);border-radius:12px;padding:4px 10px;font-size:19px}
+.rank li.me{border-color:var(--red);background:var(--sign-2)}
+.rank .medal{font-size:22px;text-align:center}
+.rank .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.rank .pt{font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion:reduce){.critter{transition:none}.pop{animation-duration:.01s}.ani.on{transform:none}
+  .critter.angry,.field.quake,.hole.danger::before,.sign.zero,.vein{animation:none}}
+</style>
+</head>
+<body>
+
+<div class="layout">
+<div class="wrap">
+  <div class="top">
+    <h1>두더지 잡기!</h1>
+    <button class="who" id="who" aria-label="플레이어 바꾸기"><span class="av" id="whoAv">🙂</span><span class="nm" id="whoNm">플레이어</span></button>
+  </div>
+  <div class="signs">
+    <div class="sign"><small>점수</small><b id="score">0</b></div>
+    <div class="sign"><small>남은 시간</small><b id="time">30</b></div>
+    <div class="sign"><small>내 최고</small><b id="best">0</b></div>
+  </div>
+  <div class="field" id="field"></div>
+</div>
+<aside class="board" aria-label="친구별 최고 기록판">
+  <h3>🏆 최고 기록판</h3>
+  <p class="sub">친구별 최고 점수</p>
+  <ol id="boardList"></ol>
+</aside>
+</div>
+
+<div class="overlay" id="overlay"><div class="card" id="card"></div></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const field=$('field'),scoreEl=$('score'),timeEl=$('time'),bestEl=$('best'),overlay=$('overlay'),card=$('card');
+const ANIMALS=['🐰','🐻','🐱','🐶','🦊','🐼','🐯','🐸','🐧','🦁','🐨','🐹'];
+const MEDALS=['🥇','🥈','🥉'];
+let score=0,time=30,playing=false,timers=[],ctx=null;
+let players=[],cur=null,askDel=null;
+
+/* ---------- 저장 (이 기기에만 저장) ---------- */
+function load(){try{const d=JSON.parse(localStorage.getItem('molePlayers')||'{}');players=Array.isArray(d.players)?d.players:[];cur=d.cur||null}catch(e){players=[]}
+  if(!players.find(p=>p.id===cur))cur=null}
+function save(){try{localStorage.setItem('molePlayers',JSON.stringify({players,cur}))}catch(e){}}
+const me=()=>players.find(p=>p.id===cur);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function refreshTop(){const p=me();$('whoAv').textContent=p?p.emoji:'🙂';$('whoNm').textContent=p?p.name:'플레이어';bestEl.textContent=p?p.best:0;renderBoard()}
+function renderBoard(){
+  const el=$('boardList');
+  if(!players.length){el.innerHTML='<li class="empty" style="display:block;border:0;background:none">아직 친구가 없어요.<br>새 친구를 만들고<br>첫 기록을 세워 봐요!</li>';return}
+  const ranked=[...players].sort((a,b)=>b.best-a.best||a.name.localeCompare(b.name));
+  el.innerHTML=ranked.map((q,i)=>`<li class="${q.id===cur?'me':''}${i===0&&q.best>0?' top1':''}"><span class="medal">${q.best>0&&MEDALS[i]?MEDALS[i]:i+1}</span><span class="av">${q.emoji}</span><span class="nm">${esc(q.name)}<small>${q.plays||0}번 했어요</small></span><span class="pt">${q.best}<small>점</small></span></li>`).join('');
+}
+
+/* ---------- 구멍 ---------- */
+const holes=[];
+for(let i=0;i<9;i++){
+  const b=document.createElement('button');b.className='hole';b.id='hole'+i;b.setAttribute('aria-label','구멍 '+(i+1));
+  b.innerHTML='<div class="critter"></div>';
+  b.addEventListener('pointerdown',e=>{e.preventDefault();whack(i,e)});
+  b.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();whack(i)}});
+  field.appendChild(b);holes.push({el:b,c:b.firstChild,kind:null,t:null});
+}
+function tone(f,d=.12,type='square',v=.08){
+  if(!ctx)return;try{const o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.value=f;
+  g.gain.setValueAtTime(v,ctx.currentTime);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+d);
+  o.connect(g).connect(ctx.destination);o.start();o.stop(ctx.currentTime+d)}catch(e){}
+}
+/* ---------- 두더지 얼굴 (표정) ---------- */
+const SNOUT='<ellipse cx="50" cy="60" rx="21" ry="13" fill="#e8c9a3"/><ellipse cx="50" cy="53" rx="8" ry="6" fill="#ff7aa2"/>';
+const S='stroke="#1b120a" stroke-width="4.5" fill="none" stroke-linecap="round"';
+const DOT=x=>`<circle cx="${x}" cy="37" r="6" fill="#1b120a"/><circle cx="${x+2}" cy="35" r="2" fill="#fff"/>`;
+const BLUSH='<ellipse cx="21" cy="52" rx="7" ry="4" fill="#ff9fb8" opacity=".85"/><ellipse cx="79" cy="52" rx="7" ry="4" fill="#ff9fb8" opacity=".85"/>';
+const MOODS={
+  happy:`<path d="M27 39 Q34 30 41 39 M59 39 Q66 30 73 39" ${S}/>${BLUSH}${SNOUT}<path d="M41 74 Q50 84 59 74" ${S}/>`,
+  surprised:`<path d="M24 19 Q34 12 44 19 M56 19 Q66 12 76 19" ${S}/><circle cx="34" cy="37" r="10" fill="#fff"/><circle cx="66" cy="37" r="10" fill="#fff"/><circle cx="34" cy="38" r="5" fill="#1b120a"/><circle cx="66" cy="38" r="5" fill="#1b120a"/>${SNOUT}<ellipse cx="50" cy="80" rx="6" ry="7" fill="#5a1d10"/>`,
+  silly:`<path d="M27 38 Q34 30 41 38" ${S}/>${DOT(64)}${SNOUT}<path d="M38 73 Q50 80 62 73" ${S}/><path d="M45 76 Q45 89 51 89 Q57 89 57 76Z" fill="#ff5c7a"/>`,
+  sleepy:`<path d="M27 37 Q34 43 41 37 M59 37 Q66 43 73 37" ${S}/>${SNOUT}<circle cx="50" cy="78" r="3.5" fill="#5a1d10"/><text x="72" y="24" font-size="13" fill="#fff" font-family="sans-serif" font-weight="bold">z</text><text x="80" y="17" font-size="17" fill="#fff" font-family="sans-serif" font-weight="bold">Z</text>`,
+  cool:`<rect x="19" y="28" width="27" height="17" rx="8" fill="#1b120a"/><rect x="54" y="28" width="27" height="17" rx="8" fill="#1b120a"/><path d="M46 33 L54 33" ${S}/><path d="M24 33 L30 31 M59 33 L65 31" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>${SNOUT}<path d="M42 76 Q53 80 61 71" ${S}/>`,
+  cheeky:`${DOT(34)}${DOT(66)}${BLUSH}${SNOUT}<rect x="43.5" y="66" width="6" height="9" rx="1.5" fill="#fff" stroke="#b89a70" stroke-width="1"/><rect x="50.5" y="66" width="6" height="9" rx="1.5" fill="#fff" stroke="#b89a70" stroke-width="1"/>`,
+  angry:`<path d="M23 24 L44 32 M77 24 L56 32" stroke="#1b120a" stroke-width="6" stroke-linecap="round"/><circle cx="35" cy="40" r="5" fill="#1b120a"/><circle cx="65" cy="40" r="5" fill="#1b120a"/>${SNOUT}<path d="M39 81 Q50 71 61 81" ${S}/>`
+};
+const MOOD_LIST=['happy','surprised','silly','sleepy','cool','cheeky'];
+const OUCH=['아야!','흥!','에잇!','으으!','앗 따가!'];
+const rnd=a=>a[Math.floor(Math.random()*a.length)];
+const face=(m,top)=>`<svg viewBox="0 0 100 100"${top?' preserveAspectRatio="xMidYMin meet"':''} aria-hidden="true">${MOODS[m]}</svg>`;
+
+/* ---------- 나오기 / 숨기 ---------- */
+function show(h,kind){
+  h.kind=kind;h.hit=false;let cls='critter ',html='';
+  if(kind==='bee'){cls+='bee';html='🐝'}
+  else if(kind==='skull'){cls+='skull';html='💀';h.el.classList.add('danger')}
+  else{cls+='mole'+(kind==='gold'?' gold':kind==='tiny'?' tiny':'');html=kind==='tiny'?face('happy',1):face(rnd(MOOD_LIST))}
+  h.c.className=cls;h.c.innerHTML=html;h.el.classList.add('up');
+  const base=Math.max(650,1300-(30-time)*20);
+  h.t=setTimeout(()=>hide(h),kind==='tiny'?Math.max(700,base*.8):kind==='skull'?1400:base);
+}
+function popUp(){
+  if(!playing)return;
+  const free=holes.filter(h=>!h.kind);
+  if(free.length){const r=Math.random();show(rnd(free),r<.06?'tiny':r<.17?'gold':r<.31?'bee':'mole')}
+  timers.push(setTimeout(popUp,Math.max(380,800-(30-time)*14)*(0.6+Math.random()*0.6)));
+}
+function spawnSkull(){
+  if(!playing)return;
+  const free=holes.filter(h=>!h.kind);
+  if(!free.length){timers.push(setTimeout(spawnSkull,250));return}
+  show(rnd(free),'skull');tone(110,.25,'sawtooth',.05);
+}
+function hide(h){clearTimeout(h.t);h.el.classList.remove('up','danger');setTimeout(()=>{h.kind=null;h.hit=false},160)}
+function float(h,txt,cls=''){const s=document.createElement('span');s.className='pop '+cls;s.textContent=txt;h.el.appendChild(s);setTimeout(()=>s.remove(),700)}
+function skullFx(){
+  field.classList.remove('quake');void field.offsetWidth;field.classList.add('quake');
+  const sg=scoreEl.parentElement;sg.classList.remove('zero');void sg.offsetWidth;sg.classList.add('zero');
+  setTimeout(()=>{field.classList.remove('quake');sg.classList.remove('zero')},1000);
+  [392,311,233,155].forEach((f,k)=>setTimeout(()=>tone(f,.2,'sawtooth',.07),k*120));
+}
+
+/* ---------- 누르기 ---------- */
+function whack(i,e){
+  const h=holes[i];if(!playing||!h.kind||h.hit||!h.el.classList.contains('up'))return;
+  if(h.kind==='tiny'&&e&&!e.target.closest('.critter')){float(h,'놓쳤다!','miss');return}
+  h.hit=true;clearTimeout(h.t);
+  if(h.kind==='skull'){score=0;float(h,'점수 0!','boom');skullFx();hide(h)}
+  else if(h.kind==='bee'){score=Math.max(0,score-2);float(h,'앗! -2');tone(160,.3,'sawtooth');hide(h)}
+  else{
+    const p={mole:1,gold:3,tiny:10}[h.kind];score+=p;
+    h.c.innerHTML=face('angry',h.kind==='tiny')+'<span class="vein">💢</span>';h.c.classList.add('angry');
+    float(h,'+'+p+' '+rnd(OUCH));
+    if(p===10)[784,988,1175,1568].forEach((f,k)=>setTimeout(()=>tone(f,.12),k*70));
+    else if(p===3){tone(880,.1);setTimeout(()=>tone(1320,.15),90)}
+    else tone(660,.1);
+    setTimeout(()=>tone(170,.16,'sawtooth',.05),110);
+    setTimeout(()=>hide(h),480);
+  }
+  scoreEl.textContent=score;
+}
+
+/* ---------- 화면: 플레이어 고르기 ---------- */
+function showPicker(){
+  askDel=null;overlay.hidden=false;
+  const tiles=players.map(p=>`
+    <div class="pl-wrap">
+      <button class="pl${p.id===cur?' on':''}" data-pick="${p.id}"><span class="av">${p.emoji}</span><span class="nm">${esc(p.name)}</span><span class="bs">최고 ${p.best}점</span></button>
+      <button class="del" data-del="${p.id}" aria-label="${esc(p.name)} 지우기">✕</button>
+    </div>`).join('');
+  card.innerHTML=`<h2>누가 할까요?</h2>
+    <p>${players.length?'내 이름을 눌러요!':'먼저 친구를 만들어요!'}</p>
+    <div class="players">${tiles}
+      <div class="pl-wrap"><button class="pl add" id="addBtn"><span class="av">➕</span><span class="nm">새 친구</span></button></div>
+    </div>`;
+  card.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{cur=b.dataset.pick;save();refreshTop();showIntro()});
+  card.querySelectorAll('[data-del]').forEach(b=>b.onclick=e=>{
+    e.stopPropagation();const id=b.dataset.del;
+    if(askDel===id){players=players.filter(p=>p.id!==id);if(cur===id)cur=null;save();refreshTop();showPicker();return}
+    card.querySelectorAll('.del').forEach(x=>{x.classList.remove('ask');x.textContent='✕'});
+    askDel=id;b.classList.add('ask');b.textContent='정말 지울까요?';
+  });
+  $('addBtn').onclick=showAdd;
+  (card.querySelector('.pl.on')||card.querySelector('.pl')).focus();
+}
+
+/* ---------- 화면: 새 친구 만들기 ---------- */
+function showAdd(){
+  let pick=ANIMALS[players.length%ANIMALS.length];
+  card.innerHTML=`<h2>새 친구 만들기</h2>
+    <div class="form">
+      <label for="nameIn">이름을 써요</label>
+      <input id="nameIn" maxlength="8" autocomplete="off" placeholder="예: 민준">
+      <label>동물 친구를 골라요</label>
+      <div class="animals">${ANIMALS.map(a=>`<button class="ani${a===pick?' on':''}" data-a="${a}" aria-label="동물 ${a}">${a}</button>`).join('')}</div>
+      <div class="err" id="err"></div>
+    </div>
+    <div class="row"><button class="btn blue" id="back">돌아가기</button><button class="btn" id="ok">만들기!</button></div>`;
+  const inp=$('nameIn');
+  card.querySelectorAll('.ani').forEach(b=>b.onclick=()=>{pick=b.dataset.a;card.querySelectorAll('.ani').forEach(x=>x.classList.toggle('on',x===b))});
+  $('back').onclick=showPicker;
+  const make=()=>{
+    const name=inp.value.trim();
+    if(!name){$('err').textContent='이름을 써 주세요!';inp.focus();return}
+    if(players.some(p=>p.name===name)){$('err').textContent='같은 이름이 벌써 있어요!';inp.focus();return}
+    const p={id:'p'+Date.now().toString(36),name,emoji:pick,best:0,plays:0};
+    players.push(p);cur=p.id;save();refreshTop();showIntro();
+  };
+  $('ok').onclick=make;
+  inp.addEventListener('keydown',e=>{if(e.key==='Enter')make()});
+  inp.focus();
+}
+
+/* ---------- 화면: 시작 안내 ---------- */
+function showIntro(){
+  const p=me();if(!p)return showPicker();
+  overlay.hidden=false;
+  card.innerHTML=`<h2>${p.emoji} ${esc(p.name)}, 준비됐나요?</h2>
+    <p>구멍에서 나온 두더지를<br>손가락으로 콕! 눌러요.</p>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--mole)"></i>1점</span>
+      <span><i class="dot" style="background:var(--gold)"></i>황금 3점</span>
+      <span><i class="dot" style="background:var(--pink);width:10px;height:18px;border-radius:6px;box-shadow:0 0 6px var(--pink-glow)"></i>⭐꼬마 10점</span>
+      <span>🐝 -2점</span>
+    </div>
+    <p style="font-size:17px">💀 해골이 3번 나와요!<br>누르면 점수가 0점이 돼요!</p>
+    <p style="font-size:16px;color:var(--dirt)">내 최고 점수: ${p.best}점</p>
+    <div class="row"><button class="btn blue" id="chg">친구 바꾸기</button><button class="btn" id="go">시작!</button></div>`;
+  $('go').onclick=start;$('chg').onclick=showPicker;$('go').focus();
+}
+
+/* ---------- 게임 ---------- */
+function start(){
+  if(!me())return showPicker();
+  if(!ctx){try{ctx=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}
+  score=0;time=30;scoreEl.textContent=0;timeEl.textContent=30;
+  holes.forEach(h=>{clearTimeout(h.t);h.kind=null;h.hit=false;h.el.classList.remove('up','danger')});
+  overlay.hidden=true;playing=true;tone(520,.1);
+  timers.push(setTimeout(popUp,500));
+  [[3,9],[11,18],[20,26]].forEach(([a,b])=>timers.push(setTimeout(spawnSkull,(a+Math.random()*(b-a))*1000)));
+  const tick=setInterval(()=>{time--;timeEl.textContent=time;if(time<=5&&time>0)tone(440,.06,'sine');if(time<=0){clearInterval(tick);end()}},1000);
+  timers.push(tick);
+}
+function end(){
+  playing=false;timers.forEach(t=>{clearTimeout(t);clearInterval(t)});timers=[];
+  holes.forEach(hide);
+  const p=me();let msg='잘했어요!';
+  if(p){p.plays=(p.plays||0)+1;
+    if(score>p.best&&score>0){p.best=score;msg='새 기록이에요! 🎉'}
+    else if(score>=25)msg='두더지 대장! 👑';
+    save();refreshTop();}
+  [523,659,784].forEach((f,k)=>setTimeout(()=>tone(f,.18,'triangle',.1),k*130));
+  const ranked=[...players].sort((a,b)=>b.best-a.best).slice(0,5);
+  const list=ranked.map((q,i)=>`<li class="${q.id===cur?'me':''}"><span class="medal">${MEDALS[i]||i+1}</span><span>${q.emoji}</span><span class="nm">${esc(q.name)}</span><span class="pt">${q.best}점</span></li>`).join('');
+  overlay.hidden=false;
+  card.innerHTML=`<h2>${msg}</h2>
+    <p>${p?p.emoji+' '+esc(p.name)+'의 점수':'점수'}</p>
+    <div class="big">${score}점</div>
+    ${players.length>1?`<p style="font-size:18px">🏆 친구들 순위</p><ol class="rank">${list}</ol>`:''}
+    <div class="row"><button class="btn blue" id="chg">친구 바꾸기</button><button class="btn" id="go">한 번 더!</button></div>`;
+  $('go').onclick=start;$('chg').onclick=showPicker;$('go').focus();
+}
+$('who').onclick=()=>{if(!playing)showPicker()};
+
+load();refreshTop();
+me()?showIntro():showPicker();
+</script>
+<script>if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}</script>
+</body>
+</html>
