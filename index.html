@@ -21,6 +21,7 @@
   --font:"Jua","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
   color-scheme:light;
 }
+[hidden]{display:none!important}
 html{height:100%}body{height:calc(100% - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
 body{background:linear-gradient(var(--sky2) 0%, var(--sky) 22%, var(--grass) 22%, var(--grass) 100%);transition:background .4s;color:var(--ink);font-family:var(--font);
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
@@ -58,8 +59,9 @@ h1{margin:0;font-weight:400;font-size:clamp(24px,7vw,36px);color:#fff;text-shado
 @media (max-width:480px){.signs{gap:6px}.sign{padding:4px 4px;border-width:3px}.sign small{font-size:13px}.sign b{font-size:24px}}
 .sign small{display:block;font-size:15px;color:var(--dirt)}
 .sign b{font-weight:400;font-size:28px;font-variant-numeric:tabular-nums}
-.field{flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(10px,3vw,20px);align-content:center;min-height:0}
-.hole{position:relative;aspect-ratio:1/1;max-width:100%;border:0;padding:0;background:none;cursor:pointer;overflow:hidden;border-radius:0 0 50% 50%}
+.field{flex:1;min-height:0;container-type:size;display:grid;place-items:center}
+.grid{width:min(100%,58vh);aspect-ratio:1/1;width:min(100cqw,100cqh);height:min(100cqw,100cqh);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:clamp(8px,3cqmin,20px)}
+.hole{position:relative;width:100%;height:100%;min-width:0;min-height:0;border:0;padding:0;background:none;cursor:pointer;overflow:hidden;border-radius:0 0 50% 50%}
 .hole:focus-visible{outline:4px solid #fff;outline-offset:2px}
 .hole::after{content:"";position:absolute;left:4%;right:4%;bottom:6%;height:30%;background:radial-gradient(ellipse at 50% 40%,var(--dirt-dark) 55%,var(--dirt) 56%);border-radius:50%;z-index:3}
 .critter{position:absolute;left:50%;bottom:-70%;width:68%;height:72%;transform:translateX(-50%);transition:bottom .15s ease-out;z-index:2;font-size:clamp(40px,13vw,72px);display:grid;place-items:center}
@@ -127,7 +129,7 @@ h1{margin:0;font-weight:400;font-size:clamp(24px,7vw,36px);color:#fff;text-shado
 .wd:active{transform:translateY(3px);box-shadow:0 1px 0 var(--dirt-dark)}
 .stars{color:var(--coin);letter-spacing:1px}
 .stars i{font-style:normal;opacity:.3;filter:grayscale(1)}
-.itembar{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;min-height:52px;align-items:center}
+.itembar{position:relative;z-index:4;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;min-height:52px;align-items:center}
 .itm{font-family:var(--font);font-size:17px;color:var(--ink);background:var(--sign);border:3px solid var(--dirt);border-radius:14px;padding:4px 10px;min-height:48px;box-shadow:0 3px 0 var(--dirt-dark);display:flex;align-items:center;gap:5px;cursor:pointer}
 .itm .ic{font-size:26px;line-height:1}
 .itm .ct{font-size:15px;background:var(--red);color:#fff;border-radius:999px;padding:0 7px;font-variant-numeric:tabular-nums}
@@ -224,7 +226,7 @@ h1{margin:0;font-weight:400;font-size:clamp(24px,7vw,36px);color:#fff;text-shado
     <div class="sign"><small>내 최고</small><b id="best">0</b></div>
     <div class="sign coin" id="coinSign"><small>🪙 코인</small><b id="coins">0</b></div>
   </div>
-  <div class="field" id="field"></div>
+  <div class="field" id="field"><div class="grid" id="grid"></div></div>
   <div class="itembar" id="bar" aria-label="아이템"></div>
 </div>
 <aside class="board" aria-label="친구별 최고 기록판">
@@ -326,7 +328,7 @@ for(let i=0;i<9;i++){
   b.innerHTML='<div class="critter"></div>';
   b.addEventListener('pointerdown',e=>{e.preventDefault();whack(i,e)});
   b.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();whack(i)}});
-  field.appendChild(b);holes.push({el:b,c:b.firstChild,kind:null,t:null});
+  $('grid').appendChild(b);holes.push({el:b,c:b.firstChild,kind:null,t:null});
 }
 function tone(f,d=.12,type='square',v=.08){
   if(!ctx)return;try{const o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.value=f;
