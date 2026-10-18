@@ -72,7 +72,9 @@ h1{margin:0;font-weight:400;font-size:clamp(24px,7vw,36px);color:#fff;text-shado
 .critter.tiny{width:26%;height:46%;bottom:-62%;border-radius:50% 50% 34% 34%/34% 34% 20% 20%;background:var(--pink);box-shadow:0 0 14px 5px var(--pink-glow),inset 0 -5px 0 rgba(0,0,0,.12)}
 .hole.up .critter.tiny{bottom:18%}
 .critter.tiny::before{content:"⭐";position:absolute;top:-24%;left:50%;transform:translateX(-50%);font-size:clamp(14px,4vw,24px);line-height:1}
-.critter.bee,.critter.skull{background:none;box-shadow:none}
+.critter.bee,.critter.bad,.critter.skull{background:none;box-shadow:none}
+.field.badfx{animation:badfx .5s ease-out}
+@keyframes badfx{0%{background:var(--fx)}100%{background:transparent}}
 .critter.skull{filter:drop-shadow(0 0 10px var(--skull-glow))}
 .hole.danger::before{content:"";position:absolute;inset:18% 6% 6%;border-radius:50%;background:radial-gradient(var(--skull-glow),transparent 70%);z-index:1;animation:throb .45s ease-in-out infinite alternate}
 @keyframes throb{from{opacity:.35}to{opacity:1}}
@@ -262,7 +264,7 @@ h1{margin:0;font-weight:400;font-size:clamp(24px,7vw,36px);color:#fff;text-shado
 .cc:focus-visible{outline:4px solid var(--ink);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){.who .av.cheer,.who .av.yay,.egg.wob,.reveal,.spk,.xpbar i{animation:none;transition:none}}
 @media (prefers-reduced-motion:reduce){.critter{transition:none}.pop{animation-duration:.01s}.ani.on{transform:none}
-  .pt,.deco .star,.w-lava .hole::after,.critter.angry,.field.quake,.hole.danger::before,.sign.zero,.vein,.itm.on,.field.zap,.it.bought,.coinpop{animation:none}}
+  .pt,.deco .star,.w-lava .hole::after,.critter.angry,.field.quake,.hole.danger::before,.sign.zero,.vein,.itm.on,.field.zap,.it.bought,.coinpop,.field.badfx{animation:none}}
 </style>
 
 <div class="deco" id="deco" aria-hidden="true"></div><div class="fx" id="fx" aria-hidden="true"></div>
@@ -355,19 +357,19 @@ const pityLine=p=>p.pity>=PITY-1?'다음 알은 영웅 이상 확정!':`영웅 �
 const SK3=[[3,9],[11,18],[20,26]];
 const WORLDS={
   grass:{nm:'풀밭세계',ic:'🌱',price:0,sky2:'#bfe6ff',sky:'#bfe6ff',grass:'#7cc95a',gd:'#4f9a35',dirt:'#6b3f22',dd:'#3d2312',mole:'#a8703f',
-    deco:[],fx:null,prob:{tiny:.06,gold:.11,bad:.14},stay:1,spawn:1,skulls:SK3,bad:{ic:'🐝',pen:2,cls:'bee'},twist:'기본 규칙이에요.'},
+    deco:[],fx:null,prob:{tiny:.06,gold:.11,bad:.14},stay:1,spawn:1,skulls:SK3,bad:{ic:'🍄',nm:'독버섯',pen:2,cls:'bad',say:'으웩 독! −2',glow:'#7ee02b',fl:'rgba(120,220,40,.42)',shake:1},twist:'기본 규칙이에요.'},
   candy:{nm:'과자세계',ic:'🍭',price:5,sky2:'#ffb8e0',sky:'#ffe0f1',grass:'#8b5a3c',gd:'#5e3a24',dirt:'#e0a868',dd:'#7a4a22',mole:'#d99a4e',
     deco:[['🍭',4,3,34],['🍪',88,6,30],['🧁',76,1,28],['🍬',14,12,24],['🍩',94,15,24]],fx:{type:'fall',items:'sprinkle',every:380},
-    prob:{tiny:.06,gold:.24,bad:.14},stay:1,spawn:1,skulls:SK3,bad:{ic:'🐝',pen:2,cls:'bee'},twist:'🍩 도넛 두더지(3점)가 자주 나와요!'},
+    prob:{tiny:.06,gold:.24,bad:.14},stay:1,spawn:1,skulls:SK3,bad:{ic:'🦠',nm:'충치균',pen:2,cls:'bad',say:'으악 충치! −2',glow:'#ff4fa3',fl:'rgba(255,79,163,.42)'},twist:'🍩 도넛 두더지(3점)가 자주 나와요!'},
   ice:{nm:'얼음세계',ic:'❄️',price:10,sky2:'#a9def7',sky:'#e3f6ff',grass:'#f4fbff',gd:'#5aa9cf',dirt:'#a7dcf2',dd:'#2f7fa8',mole:'#f3f1ec',
     deco:[['⛄',5,4,34],['🏔️',86,2,38],['🌲',73,8,26],['❄️',18,12,20]],fx:{type:'fall',items:['❄️','❄','✻'],every:420},
-    prob:{tiny:.06,gold:.11,bad:.14},stay:.8,spawn:1,skulls:SK3,bad:{ic:'🐝',pen:2,cls:'bee'},twist:'두더지가 미끄러지듯 빨리 들어가요!'},
+    prob:{tiny:.06,gold:.11,bad:.14},stay:.8,spawn:1,skulls:SK3,bad:{ic:'🧊',nm:'얼음덩이',pen:2,cls:'bad',say:'으슬으슬 −2',glow:'#5fd0ff',fl:'rgba(255,255,255,.75)'},twist:'두더지가 미끄러지듯 빨리 들어가요!'},
   lava:{nm:'용암세계',ic:'🌋',price:15,sky2:'#3a0d0d',sky:'#ff7a3d',grass:'#2b2321',gd:'#120d0c',dirt:'#4a3a36',dd:'#ff5a1f',mole:'#3d3434',
     deco:[['🌋',6,3,40],['🌋',84,6,30],['🔥',20,13,20],['🔥',72,14,18]],fx:{type:'rise',items:['🔥','•','✦'],every:360},
-    prob:{tiny:.06,gold:.11,bad:.16},stay:.95,spawn:.95,skulls:[[3,8],[10,15],[17,22],[23,27]],bad:{ic:'🔥',pen:3,cls:'fire'},twist:'🔥 불덩이는 -3점! 💀 해골이 4번 나와요!'},
+    prob:{tiny:.06,gold:.11,bad:.16},stay:.95,spawn:.95,skulls:[[3,8],[10,15],[17,22],[23,27]],bad:{ic:'🔥',nm:'불덩이',pen:3,cls:'bad',say:'앗 뜨거! −3',glow:'#ff7a1a',fl:'rgba(255,120,30,.5)'},twist:'🔥 불덩이는 -3점! 💀 해골이 4번 나와요!'},
   space:{nm:'우주세계',ic:'🚀',price:20,sky2:'#05061a',sky:'#1a1f4d',grass:'#a3a5b4',gd:'#5f6170',dirt:'#85879a',dd:'#23242f',mole:'#a8703f',
     deco:[['🪐',6,3,34],['🌙',86,4,32],['🛸',72,13,24],['⭐',22,13,16]],stars:true,fx:{type:'fall',items:['✨','☄️'],every:900},
-    prob:{tiny:.12,gold:.11,bad:.14},stay:.85,spawn:.85,skulls:SK3,bad:{ic:'🐝',pen:2,cls:'bee'},twist:'⭐ 꼬마 두더지가 2배 자주! 대신 제일 빨라요!'}
+    prob:{tiny:.12,gold:.11,bad:.14},stay:.85,spawn:.85,skulls:SK3,bad:{ic:'👽',nm:'외계인',pen:2,cls:'bad',say:'삐용! −2',glow:'#37f2c4',fl:'rgba(55,242,196,.42)'},twist:'⭐ 꼬마 두더지가 2배 자주! 대신 제일 빨라요!'}
 };
 const WORLD_IDS=Object.keys(WORLDS);
 let curWorld='grass';
@@ -456,10 +458,10 @@ const face=(m,top)=>`<svg viewBox="0 0 100 100"${top?' preserveAspectRatio="xMid
 function show(h,kind,ev){
   if(ev&&h.kind){clearTimeout(h.t);h.el.classList.remove('up','danger')}
   h.kind=kind;h.hit=false;let cls='critter ',html='';
-  if(kind==='bee'){cls+=W().bad.cls;html=W().bad.ic}
+  if(kind==='bee'){cls+=W().bad.cls;html=W().bad.ic;h.c.style.filter='drop-shadow(0 0 10px '+W().bad.glow+')'}
   else if(kind==='skull'){cls+='skull';html='💀';h.el.classList.add('danger')}
   else{cls+='mole'+(kind==='gold'?' gold':kind==='tiny'?' tiny':'');html=kind==='tiny'?face('happy',1):face(ev?MOOD_LIST[ev.m]:rnd(MOOD_LIST))}
-  h.c.className=cls;h.c.innerHTML=html;h.el.classList.add('up');
+  h.c.className=cls;h.c.innerHTML=html;if(kind!=='bee')h.c.style.filter='';h.el.classList.add('up');
   const base=Math.max(650,1300-(30-time)*20)*W().stay;
   let stay=kind==='tiny'?Math.max(700,base*.8):kind==='skull'?1400:base;
   const now=Date.now();
@@ -500,7 +502,7 @@ function whack(i,e){
     else{score=0;float(h,'점수 0!','boom');skullFx()}
     hide(h);
   }
-  else if(h.kind==='bee'){const pen=W().bad.pen;score=Math.max(0,score-pen);float(h,(pen>2?'앗 뜨거! -':'앗! -')+pen);tone(160,.3,'sawtooth');hide(h)}
+  else if(h.kind==='bee'){const pen=W().bad.pen;score=Math.max(0,score-pen);float(h,W().bad.say);badFx();hide(h)}
   scoreEl.textContent=score;
 }
 function hitMole(h,quiet){
@@ -509,15 +511,23 @@ function hitMole(h,quiet){
   h.c.innerHTML=face('angry',h.kind==='tiny')+'<span class="vein">💢</span>';h.c.classList.add('angry');
   float(h,'+'+p+' '+rnd(OUCH));
   if(!quiet){
-    if(p===10)[784,988,1175,1568].forEach((f,k)=>setTimeout(()=>tone(f,.12),k*70));
-    else if(p===3){tone(880,.1);setTimeout(()=>tone(1320,.15),90)}
-    else tone(660,.1);
+    const sn=SND[curWorld]||SND.grass;
+    if(p===10)[784,988,1175,1568].forEach((f,k)=>setTimeout(()=>tone(f*sn.m,.12,sn.w),k*70));
+    else if(p===3){tone(880*sn.m,.1,sn.w);setTimeout(()=>tone(1320*sn.m,.15,sn.w),90)}
+    else tone(660*sn.m,.1,sn.w);
     setTimeout(()=>tone(170,.16,'sawtooth',.05),110);
   }
   setTimeout(()=>hide(h),480);
   scoreEl.textContent=score;
   catches++;cheerYay();
   if(catches%gameRate===0){earned++;const pl=me();if(pl){pl.coins++;save();coinsEl.textContent=pl.coins}coinFx()}
+}
+const SND={grass:{w:'square',m:1},candy:{w:'triangle',m:1.5},ice:{w:'sine',m:2},lava:{w:'sawtooth',m:.6},space:{w:'square',m:1.25}};
+const BADSND={grass:[[200,.12,'sawtooth'],[150,.2,'sawtooth']],candy:[[520,.1,'sine'],[330,.1,'sine'],[190,.22,'sine']],ice:[[2200,.08,'triangle'],[1600,.1,'triangle'],[1100,.16,'triangle']],lava:[[120,.3,'sawtooth'],[90,.25,'square']],space:[[900,.08,'square'],[450,.08,'square'],[900,.08,'square'],[300,.14,'square']]};
+function badFx(){
+  const b=W().bad;field.style.setProperty('--fx',b.fl);field.classList.remove('badfx');void field.offsetWidth;field.classList.add('badfx');setTimeout(()=>field.classList.remove('badfx'),550);
+  if(b.shake){field.classList.remove('quake');void field.offsetWidth;field.classList.add('quake');setTimeout(()=>field.classList.remove('quake'),450)}
+  (BADSND[curWorld]||BADSND.grass).forEach(([f,d,t],k)=>setTimeout(()=>tone(f,d,t,.08),k*90));
 }
 function cheerYay(){const a=$('whoAv');if(!a.classList.contains('cheer'))return;a.classList.remove('yay');void a.offsetWidth;a.classList.add('yay');setTimeout(()=>a.classList.remove('yay'),420)}
 function coinFx(){
@@ -764,7 +774,7 @@ function showIntro(){
       <span><i class="dot" style="background:var(--mole)"></i>1점</span>
       <span>${curWorld==='candy'?'🍩도넛':'<i class="dot" style="background:var(--gold)"></i>황금'} 3점</span>
       <span><i class="dot" style="background:var(--pink);width:10px;height:18px;border-radius:6px;box-shadow:0 0 6px var(--pink-glow)"></i>⭐꼬마 10점</span>
-      <span>${w.bad.ic} -${w.bad.pen}점</span>
+      <span>${w.bad.ic} ${w.bad.nm} -${w.bad.pen}점</span>
     </div>
     <p style="font-size:17px">💀 해골 ${w.skulls.length}번! 누르면 점수 0점 · 두더지 ${coinRate(lvOf(p.xp))}마리 = 🪙1</p>
     <p style="font-size:16px;color:var(--dirt)">내 최고 ${b}점 ${starsHtml(starCount(b))} · 🪙${p.coins}<br>⭐10점 ⭐⭐20점 ⭐⭐⭐30점</p>
