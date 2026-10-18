@@ -210,6 +210,10 @@ h1{margin:0;font-weight:400;font-size:clamp(24px,7vw,36px);color:#fff;text-shado
 .rank .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .rank .pt{font-variant-numeric:tabular-nums}
 /* 레벨 · 캐릭터 · 알 */
+.topr{display:flex;align-items:center;gap:6px;min-width:0;max-width:64%}
+.topr .who{max-width:none;min-width:0}
+.mute{flex:none;width:42px;height:38px;padding:0;font-size:20px;line-height:1;background:var(--sign);border:3px solid var(--dirt);border-radius:999px;cursor:pointer;box-shadow:0 3px 0 var(--dirt-dark)}
+.mute:focus-visible{outline:4px solid #fff}
 .rank li.vsr{grid-template-columns:34px 34px 1fr}
 .rank .sc{font-weight:400;font-size:24px;color:var(--red);font-variant-numeric:tabular-nums;margin-left:4px}
 .rank .gap{font-size:14px;color:var(--dirt)}
@@ -272,7 +276,7 @@ h1{margin:0;font-weight:400;font-size:clamp(24px,7vw,36px);color:#fff;text-shado
 <div class="wrap">
   <div class="top">
     <h1>두더지 잡기!</h1>
-    <button class="who" id="who" aria-label="플레이어 바꾸기"><span class="av" id="whoAv">🙂</span><span class="nm" id="whoNm">플레이어</span><span class="lv" id="whoLv" hidden></span></button>
+    <div class="topr"><button class="mute" id="mute" aria-label="배경음악 끄기" aria-pressed="true">🔊</button><button class="who" id="who" aria-label="플레이어 바꾸기"><span class="av" id="whoAv">🙂</span><span class="nm" id="whoNm">플레이어</span><span class="lv" id="whoLv" hidden></span></button></div>
   </div>
   <div class="signs">
     <div class="sign"><small>점수</small><b id="score">0</b></div>
@@ -788,7 +792,7 @@ function showIntro(){
 let askWorld=null;
 function showHome(){
   const p=me();if(!p)return showPicker();
-  overlay.hidden=false;card.classList.add('home');const lp=lvProg(p.xp);
+  overlay.hidden=false;card.classList.add('home');const lp=lvProg(p.xp);bgmSet('home');
   card.innerHTML=`<h2>🗺️ 어느 세계로 갈까요?</h2>
     <div class="homebar"><span>${avOf(p)} ${esc(p.name)}</span><span class="lvchip">Lv.${lp.l}${lp.max?' 👑':''}</span><span>🪙 ${p.coins}</span></div>
     <div class="xpbar" aria-label="경험치 ${lp.pct}%"><i style="width:${lp.pct}%"></i></div>
@@ -962,6 +966,7 @@ function showVsLobby(){
 }
 function vsCountdown(room){
   vs.phase='count';vsArmPlay();
+  bgmSet(null);
   const wid=WORLDS[room.world]?room.world:'grass',w=WORLDS[wid];applyWorld(wid);
   const t0=room.startAt-(vs.off||0);overlay.hidden=false;card.classList.remove('home');
   vs.cd=null;
@@ -980,6 +985,7 @@ function vsBar(){
 }
 function vsFinish(xp){
   vs.phase='wait';vs.xp=xp;vs.fin=false;$('vsbar').hidden=true;
+  bgmSet(null);
   overlay.hidden=false;card.classList.remove('home');
   card.innerHTML=`<h2>끝!</h2><div class="big">${score}점</div><p>친구들이 끝나길 기다려요…</p>`;
   vs.wt=setTimeout(vsResult,9000);
@@ -1031,7 +1037,7 @@ function start(v){
   score=0;time=total;scoreEl.textContent=0;timeEl.textContent=total;
   field.classList.remove('slowmo','icy','zap','quake');
   holes.forEach(h=>{clearTimeout(h.t);h.kind=null;h.hit=false;h.el.classList.remove('up','danger')});
-  overlay.hidden=true;playing=true;$('whoAv').classList.toggle('cheer',!!p.eq);tone(520,.1);renderBar();
+  overlay.hidden=true;playing=true;$('whoAv').classList.toggle('cheer',!!p.eq);tone(520,.1);renderBar();bgmSet(curWorld);
   if(vm){
     vs.sent=0;vs.fin=false;$('vsbar').hidden=false;vsBar();
     buildSched(vs.room.seed,vs.room.world).forEach(e=>timers.push(setTimeout(()=>{if(playing)show(holes[e.h],e.k,e)},e.t)));
@@ -1066,6 +1072,7 @@ function end(){
     xp={gain,sb,r,b0,b1:lvProg(p.xp)};
     save();refreshTop();}
   if(isVs)return vsFinish(xp);
+  bgmSet('home');
   [523,659,784].forEach((f,k)=>setTimeout(()=>tone(f,.18,'triangle',.1),k*130));
   if(xp&&xp.r.l1>xp.r.l0)[784,988,1175,1568].forEach((f,k)=>setTimeout(()=>tone(f,.14,'square',.06),500+k*110));
   const ranked=[...players].sort((a,b)=>wBest(b)-wBest(a)).slice(0,5);
@@ -1084,6 +1091,61 @@ function end(){
   $('go').onclick=()=>p&&hasPre(p)?showIntro():start();$('home').onclick=showHome;$('shop').onclick=()=>showShop(null,showIntro);$('go').focus();
 }
 $('who').onclick=()=>{if(!playing)showPicker()};
+/* ---------- 배경음악 (폰 안에서 직접 만드는 소리) ---------- */
+let bgmOn=true;try{bgmOn=localStorage.getItem('moleBgm')!=='0'}catch(e){}
+let bgWant=null,bg={id:null,step:0,next:0,iv:null,gain:null,noise:null,ctx:null};
+const mf=m=>440*Math.pow(2,(m-69)/12);
+const BGM={
+  home:{bpm:88,root:60,prog:[[0,'M'],[5,'M'],[7,'M'],[0,'M']],arp:[0,2,1,2,0,2,1,2],wave:'triangle',vol:.05,dec:1.5,bass:{wave:'sine',vol:.07,steps:[0,4]}},
+  grass:{bpm:128,root:67,prog:[[0,'M'],[7,'M'],[9,'m'],[5,'M']],arp:[0,1,2,3,2,1,2,1],wave:'square',vol:.022,dec:.9,bass:{wave:'triangle',vol:.08,steps:[0,2,4,6],len:1.5},drums:{k:[0,4],h:[1,3,5,7]}},
+  candy:{bpm:112,root:65,prog:[[0,'M'],[9,'m'],[2,'m'],[7,'M']],arp:[3,2,1,2,3,2,1,0],wave:'sine',vol:.07,oct:12,dec:1.8,bass:{wave:'sine',vol:.07,steps:[0,4]}},
+  ice:{bpm:84,root:57,prog:[[0,'m'],[8,'M'],[3,'M'],[10,'M']],arp:[0,2,3,2,1,2,3,null],wave:'triangle',vol:.05,oct:12,dec:2.2,bass:{wave:'sine',vol:.06,steps:[0],len:4}},
+  lava:{bpm:144,root:50,prog:[[0,'m'],[0,'m'],[8,'M'],[7,'M']],arp:[0,null,2,0,3,null,2,0],wave:'sawtooth',vol:.017,dec:.8,bass:{wave:'square',vol:.04,steps:[0,1,2,3,4,5,6,7],len:.9},drums:{k:[0,4],s:[2,6],h:[1,3,5,7]}},
+  space:{bpm:96,root:64,prog:[[0,'m'],[3,'M'],[8,'M'],[10,'M']],arp:[0,1,2,3,2,1,0,1],wave:'triangle',vol:.045,oct:12,dec:2.4,pad:true,bass:{wave:'sine',vol:.05,steps:[0],len:6}}
+};
+function bgNote(f,t,dur,type,vol,dec){
+  const o=bg.ctx.createOscillator(),g=bg.ctx.createGain(),len=dur*dec;
+  o.type=type;o.frequency.value=f;
+  g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(vol,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+len);
+  o.connect(g);g.connect(bg.gain);o.start(t);o.stop(t+len+.05);
+}
+function bgDrum(kind,t){
+  const c=bg.ctx;
+  if(kind==='k'){const o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.setValueAtTime(130,t);o.frequency.exponentialRampToValueAtTime(45,t+.12);
+    g.gain.setValueAtTime(.16,t);g.gain.exponentialRampToValueAtTime(.0001,t+.14);o.connect(g);g.connect(bg.gain);o.start(t);o.stop(t+.18);return}
+  if(!bg.noise){const n=c.createBuffer(1,Math.floor(c.sampleRate*.2),c.sampleRate),d=n.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;bg.noise=n}
+  const s=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain();s.buffer=bg.noise;f.type=kind==='h'?'highpass':'bandpass';f.frequency.value=kind==='h'?7000:1800;
+  const v=kind==='h'?.03:.07,l=kind==='h'?.04:.11;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+l);
+  s.connect(f);f.connect(g);g.connect(bg.gain);s.start(t);s.stop(t+l+.02);
+}
+function bgmStep(T,step,t,sd){
+  const bar=Math.floor(step/8)%T.prog.length,i=step%8,ro=T.prog[bar][0],tones=T.prog[bar][1]==='m'?[0,3,7,12]:[0,4,7,12];
+  const idx=T.arp[i];if(idx!=null)bgNote(mf(T.root+ro+tones[idx]+(T.oct||0)),t,sd,T.wave,T.vol,T.dec);
+  const B=T.bass;if(B&&B.steps.includes(i))bgNote(mf(T.root+ro-12),t,sd*(B.len||2),B.wave,B.vol,1);
+  if(T.pad&&i===0)bgNote(mf(T.root+ro),t,sd*8,'sine',.03,1);
+  const D=T.drums;if(D)['k','s','h'].forEach(k=>{if(D[k]&&D[k].includes(i))bgDrum(k,t)});
+}
+function bgmTick(){
+  const T=BGM[bg.id];if(!T||!bg.ctx||bg.ctx.state==='closed')return;
+  const fast=playing&&time<=5&&time>0&&bg.id!=='home',sd=60/(T.bpm*(fast?1.25:1))/2;
+  if(bg.next<bg.ctx.currentTime-.5)bg.next=bg.ctx.currentTime+.05;
+  while(bg.next<bg.ctx.currentTime+.25){try{bgmStep(T,bg.step,bg.next,sd)}catch(e){}bg.next+=sd;bg.step++}
+}
+function bgmStopNow(){clearInterval(bg.iv);bg.iv=null;bg.id=null}
+function bgmApply(){
+  if(!bgmOn||!bgWant||document.hidden||!ctx){if(bg.id)bgmStopNow();return}
+  if(bg.id===bgWant&&bg.iv)return;
+  bgmStopNow();
+  if(bg.ctx!==ctx||!bg.gain){bg.ctx=ctx;bg.gain=ctx.createGain();bg.gain.gain.value=1;bg.gain.connect(ctx.destination);bg.noise=null}
+  bg.id=bgWant;bg.step=0;bg.next=ctx.currentTime+.08;bg.iv=setInterval(bgmTick,90);bgmTick();
+}
+function bgmSet(id){bgWant=id;bgmApply()}
+function refreshMute(){const b=$('mute');b.textContent=bgmOn?'🔊':'🔇';b.setAttribute('aria-pressed',String(bgmOn));b.setAttribute('aria-label',bgmOn?'배경음악 끄기':'배경음악 켜기')}
+$('mute').onclick=()=>{initCtx();if(ctx&&ctx.state==='suspended')ctx.resume();bgmOn=!bgmOn;try{localStorage.setItem('moleBgm',bgmOn?'1':'0')}catch(e){}refreshMute();bgmApply()};
+document.addEventListener('pointerdown',()=>{if(!bgmOn)return;initCtx();if(ctx&&ctx.state==='suspended'){const r=ctx.resume();r&&r.then&&r.then(bgmApply)}bgmApply()},true);
+document.addEventListener('visibilitychange',bgmApply);
+refreshMute();
+
 renderBar();
 
 load();refreshTop();
