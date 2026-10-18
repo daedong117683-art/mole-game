@@ -208,6 +208,9 @@ h1{margin:0;font-weight:400;font-size:clamp(24px,7vw,36px);color:#fff;text-shado
 .rank .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .rank .pt{font-variant-numeric:tabular-nums}
 /* 레벨 · 캐릭터 · 알 */
+.rank li.vsr{grid-template-columns:34px 34px 1fr}
+.rank .sc{font-weight:400;font-size:24px;color:var(--red);font-variant-numeric:tabular-nums;margin-left:4px}
+.rank .gap{font-size:14px;color:var(--dirt)}
 .vsbar{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;font-size:15px}
 .vsbar span{background:var(--sign);border:3px solid var(--dirt);border-radius:999px;padding:0 8px;white-space:nowrap;display:flex;gap:4px;align-items:center}
 .vsbar span.me{border-color:var(--red);background:var(--sign-2)}
@@ -990,7 +993,7 @@ function vsResult(){
   const rank=o=>list.filter(x=>x.s>o.s).length;
   const msg=list.length<2?'친구가 나갔어요':win?(winners.length>1?'🤝 공동 1등!':'🏆 이겼어요!'):'아쉬워요! 다음엔 이길 수 있어요';
   card.innerHTML=`<h2>${msg}</h2><div class="big">${score}점</div>
-    <ol class="rank">${list.map(o=>`<li class="${o.id===vs.pid?'me':''}"><span class="medal">${MEDALS[rank(o)]||rank(o)+1}</span><span>${vsAv(o.q)}</span><span class="nm">${esc(o.q.name)}</span><span class="pt">${o.s}점</span></li>`).join('')}</ol>
+    <ol class="rank">${list.map(o=>`<li class="vsr ${o.id===vs.pid?'me':''}"><span class="medal">${MEDALS[rank(o)]||rank(o)+1}</span><span>${vsAv(o.q)}</span><span class="nm">${esc(o.q.name)} <b class="sc">${o.s}점</b>${o.s<top?` <small class="gap">(−${top-o.s})</small>`:''}</span></li>`).join('')}</ol>
     ${bonus}${xp?xpBlock(xp):''}
     <div class="row"><button class="btn blue" id="vhome">🏠 나가기</button>${vs.host?'<button class="btn" id="vagain">🔁 한 번 더!</button>':''}</div>
     ${vs.host?'':'<p style="font-size:14px;color:var(--dirt)">방장이 다시 시작하면 돌아가요</p>'}`;
