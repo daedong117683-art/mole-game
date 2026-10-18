@@ -208,6 +208,15 @@ h1{margin:0;font-weight:400;font-size:clamp(24px,7vw,36px);color:#fff;text-shado
 .rank .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .rank .pt{font-variant-numeric:tabular-nums}
 /* 레벨 · 캐릭터 · 알 */
+.vsbar{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;font-size:15px}
+.vsbar span{background:var(--sign);border:3px solid var(--dirt);border-radius:999px;padding:0 8px;white-space:nowrap;display:flex;gap:4px;align-items:center}
+.vsbar span.me{border-color:var(--red);background:var(--sign-2)}
+.vsbar b{font-weight:400;font-variant-numeric:tabular-nums;color:var(--red)}
+.vsl{list-style:none;padding:0;margin:8px 0;display:grid;gap:6px;text-align:left}
+.vsl li{display:flex;align-items:center;gap:8px;background:#fff;border:3px solid var(--sign-2);border-radius:12px;padding:4px 10px;font-size:19px}
+.vsl li.me{border-color:var(--red);background:var(--sign-2)}
+.vsl .av{font-size:28px;line-height:1}.vsl .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
 .mav{position:relative;display:inline-block;width:1em;height:1em;border-radius:50%;background:#a8703f;vertical-align:middle;box-shadow:inset 0 -.08em 0 rgba(0,0,0,.15)}
 .mav svg{width:100%;height:100%;display:block}
 .mav.king{background:#ffc83d;box-shadow:0 0 .25em #ffc83d,inset 0 -.08em 0 rgba(0,0,0,.12)}
@@ -220,7 +229,7 @@ h1{margin:0;font-weight:400;font-size:clamp(24px,7vw,36px);color:#fff;text-shado
 .who .av.yay{animation:yay .4s ease-out}
 @keyframes hop{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 @keyframes yay{40%{transform:translateY(-9px) scale(1.4) rotate(-10deg)}}
-.card.home .row{display:grid;grid-template-columns:repeat(3,auto);gap:6px;justify-content:center}.card.home .row .btn.blue{font-size:16px;padding:8px 10px;white-space:nowrap}
+.card.home .row{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}.card.home .row .btn.blue{font-size:14px;padding:8px 6px;white-space:nowrap}
 .eggit{grid-column:1/-1}
 .eggbtns{display:flex;gap:8px;width:100%}.eggbtns .buy{flex:1}
 .buy.hot{background:var(--red);box-shadow:0 4px 0 var(--red-dark)}
@@ -266,6 +275,7 @@ h1{margin:0;font-weight:400;font-size:clamp(24px,7vw,36px);color:#fff;text-shado
     <div class="sign"><small>내 최고</small><b id="best">0</b></div>
     <div class="sign coin" id="coinSign"><small>🪙 코인</small><b id="coins">0</b></div>
   </div>
+  <div class="vsbar" id="vsbar" hidden></div>
   <div class="field" id="field"><div class="grid" id="grid"></div></div>
   <div class="itembar" id="bar" aria-label="아이템"></div>
 </div>
@@ -440,16 +450,18 @@ const rnd=a=>a[Math.floor(Math.random()*a.length)];
 const face=(m,top)=>`<svg viewBox="0 0 100 100"${top?' preserveAspectRatio="xMidYMin meet"':''} aria-hidden="true">${MOODS[m]}</svg>`;
 
 /* ---------- 나오기 / 숨기 ---------- */
-function show(h,kind){
+function show(h,kind,ev){
+  if(ev&&h.kind){clearTimeout(h.t);h.el.classList.remove('up','danger')}
   h.kind=kind;h.hit=false;let cls='critter ',html='';
   if(kind==='bee'){cls+=W().bad.cls;html=W().bad.ic}
   else if(kind==='skull'){cls+='skull';html='💀';h.el.classList.add('danger')}
-  else{cls+='mole'+(kind==='gold'?' gold':kind==='tiny'?' tiny':'');html=kind==='tiny'?face('happy',1):face(rnd(MOOD_LIST))}
+  else{cls+='mole'+(kind==='gold'?' gold':kind==='tiny'?' tiny':'');html=kind==='tiny'?face('happy',1):face(ev?MOOD_LIST[ev.m]:rnd(MOOD_LIST))}
   h.c.className=cls;h.c.innerHTML=html;h.el.classList.add('up');
   const base=Math.max(650,1300-(30-time)*20)*W().stay;
   let stay=kind==='tiny'?Math.max(700,base*.8):kind==='skull'?1400:base;
   const now=Date.now();
   if(isMole(kind)){if(now<slowUntil)stay*=2;if(now<iceUntil)stay+=iceUntil-now}
+  if(ev)stay=ev.s;
   h.t=setTimeout(()=>hide(h),stay);
 }
 function popUp(){
@@ -481,7 +493,7 @@ function whack(i,e){
   h.hit=true;clearTimeout(h.t);
   const pl=me();
   if(h.kind==='skull'){
-    if(pl&&pl.items.shield>0){pl.items.shield--;usedItem=true;save();float(h,'🛡️ 막았다!','boom');[523,784].forEach((f,k)=>setTimeout(()=>tone(f,.15,'triangle',.1),k*90));renderBar()}
+    if(pl&&!vs&&pl.items.shield>0){pl.items.shield--;usedItem=true;save();float(h,'🛡️ 막았다!','boom');[523,784].forEach((f,k)=>setTimeout(()=>tone(f,.15,'triangle',.1),k*90));renderBar()}
     else{score=0;float(h,'점수 0!','boom');skullFx()}
     hide(h);
   }
@@ -514,6 +526,7 @@ function coinFx(){
 const upMoles=()=>holes.filter(h=>h.kind&&isMole(h.kind)&&!h.hit&&h.el.classList.contains('up'));
 function renderBar(){
   const p=me();if(!p){bar.innerHTML='';return}
+  if(vs){bar.innerHTML='<span class="itm badge">⚔️ 대결 중 · 아이템은 쉬어요</span>';return}
   const now=Date.now();
   let html=['bolt','slow','ice'].map(id=>{
     const it=IT[id],n=p.items[id],act=(id==='slow'&&now<slowUntil)||(id==='ice'&&now<iceUntil);
@@ -528,7 +541,7 @@ function renderBar(){
   });
 }
 function useItem(id){
-  const p=me();if(!playing||!p||p.items[id]<1)return;
+  const p=me();if(!playing||!p||vs||p.items[id]<1)return;
   const now=Date.now();
   if((id==='slow'&&now<slowUntil)||(id==='ice'&&now<iceUntil))return;
   if(id==='bolt'){
@@ -755,7 +768,7 @@ function showIntro(){
     ${hasPre(p)?`<p style="font-size:16px;margin-top:8px">이번 판에 쓸 아이템을 눌러 켜요</p><div class="pre">${['big','time'].filter(id=>p.items[id]>0).map(id=>`<button class="tog${selPre[id]?' on':''}" data-pre="${id}" aria-pressed="${selPre[id]}">${IT[id].ic} ${IT[id].nm} (${p.items[id]})</button>`).join('')}</div>`:''}
     <div class="row"><button class="btn blue" id="home">🏠 홈</button><button class="btn blue" id="shop">🏪 상점</button><button class="btn" id="go">시작!</button></div>`;
   card.querySelectorAll('[data-pre]').forEach(b=>b.onclick=()=>{const id=b.dataset.pre;selPre[id]=!selPre[id];b.classList.toggle('on',selPre[id]);b.setAttribute('aria-pressed',selPre[id])});
-  $('go').onclick=start;$('home').onclick=showHome;$('shop').onclick=()=>showShop(null,showIntro);$('go').focus();
+  $('go').onclick=()=>start();$('home').onclick=showHome;$('shop').onclick=()=>showShop(null,showIntro);$('go').focus();
 }
 
 /* ---------- 화면: 홈 (세계 지도) ---------- */
@@ -776,7 +789,7 @@ function showHome(){
         <span class="wtx"><span class="wnm">${w.nm}</span><span class="wst">${open?`${starsHtml(starCount(b))} 최고 ${b}점`:ask?'한 번 더 누르면 열려요':'코인으로 열 수 있어요'}</span></span>
         <span class="wgo">${go}</span></button>`;
     }).join('')}</div>
-    <div class="row"><button class="btn blue" id="chg">친구 바꾸기</button><button class="btn blue" id="shop">🏪 상점</button><button class="btn blue" id="chars">🎒 내 캐릭터${p.eggs>0?` 🥚${p.eggs}`:''}</button></div>`;
+    <div class="row"><button class="btn blue" id="chg">👤 친구</button><button class="btn blue" id="shop">🏪 상점</button><button class="btn blue" id="chars">🎒 캐릭터${p.eggs>0?` 🥚${p.eggs}`:''}</button><button class="btn blue" id="vsb">⚔️ 대결</button></div>`;
   card.querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>{
     const id=b.dataset.w,w=WORLDS[id];
     if(p.worlds.includes(id)){askWorld=null;applyWorld(id);save();refreshTop();showIntro();return}
@@ -787,60 +800,274 @@ function showHome(){
     [523,659,784,1047].forEach((f,k)=>setTimeout(()=>tone(f,.16,'triangle',.1),k*110));
     showHome();
   });
-  $('chg').onclick=()=>{askWorld=null;showPicker()};$('shop').onclick=()=>{askWorld=null;showShop(null,showHome)};$('chars').onclick=()=>{askWorld=null;showChars(showHome)};
+  $('chg').onclick=()=>{askWorld=null;showPicker()};$('shop').onclick=()=>{askWorld=null;showShop(null,showHome)};$('chars').onclick=()=>{askWorld=null;showChars(showHome)};$('vsb').onclick=()=>{askWorld=null;showVsMenu()};
   if(!askWorld)(card.querySelector('.wd.cur')||card.querySelector('.wd')).focus();
 }
 
+/* ---------- 친구 대결 (Firebase 실시간) ---------- */
+const FBCFG={"apiKey": "AIzaSyDUkaCkN6Hydfgf8zlKPLGff3wrCI_FvtQ", "authDomain": "mole-game-9586d.firebaseapp.com", "databaseURL": "https://mole-game-9586d-default-rtdb.asia-southeast1.firebasedatabase.app", "projectId": "mole-game-9586d", "storageBucket": "mole-game-9586d.firebasestorage.app", "messagingSenderId": "1070581867195", "appId": "1:1070581867195:web:87fc454698eeeb59d93f9e"};
+const FBV='10.14.1';
+let fbp=null;
+function fbLoad(){
+  if(window.__FB)return Promise.resolve(window.__FB);
+  if(!fbp)fbp=(async()=>{const B='https://www.gstatic.com/firebasejs/'+FBV+'/';
+    const [a,d]=await Promise.all([import(B+'firebase-app.js'),import(B+'firebase-database.js')]);
+    const app=a.initializeApp(FBCFG);return{d,db:d.getDatabase(app)}})().catch(e=>{fbp=null;throw e});
+  return fbp;
+}
+const TMO=(pr,ms=9000)=>Promise.race([pr,new Promise((_,j)=>setTimeout(()=>j(new Error('timeout')),ms))]);
+const vsErrTxt=e=>/PERMISSION/i.test((e&&(e.code||e.message))||'')?'서버 규칙이 아직 열리지 않았어요 (Firebase 규칙 게시 필요)':'연결이 안 돼요. 인터넷을 확인해요';
+/* 같은 숫자(시드)로 두더지 순서를 미리 정해서 모두 똑같은 판을 해요 */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function buildSched(seed,wid){
+  const w=WORLDS[wid]||WORLDS.grass,r=mulberry32(seed|0),ev=[],busy=Array(9).fill(0);
+  let t=500;
+  while(t<30000){
+    const el=t/1000,x=r(),pr=w.prob;
+    const kind=x<pr.tiny?'tiny':x<pr.tiny+pr.gold?'gold':x<pr.tiny+pr.gold+pr.bad?'bee':'mole';
+    const base=Math.max(650,1300-el*20)*w.stay,stay=Math.round(kind==='tiny'?Math.max(700,base*.8):base);
+    const free=[];for(let i=0;i<9;i++)if(busy[i]<=t)free.push(i);
+    const m=Math.floor(r()*MOOD_LIST.length),pick=r();
+    if(free.length){const h=free[Math.floor(pick*free.length)];busy[h]=t+stay+300;ev.push({t:Math.round(t),h,k:kind,m,s:stay})}
+    t+=Math.max(380,800-el*14)*w.spawn*(0.6+r()*0.6);
+  }
+  const clash=(h,a,b)=>ev.some(e=>e.h===h&&e.t<b&&a<e.t+e.s+300);
+  w.skulls.forEach(([a,b])=>{
+    let ts=Math.round((a+r()*(b-a))*1000),pick=r();
+    for(let k=0;k<40;k++){const free=[];for(let i=0;i<9;i++)if(!clash(i,ts,ts+1700))free.push(i);
+      if(free.length){ev.push({t:ts,h:free[Math.floor(pick*free.length)],k:'skull',m:0,s:1400});break}ts+=250}
+  });
+  return ev.sort((p,q)=>p.t-q.t);
+}
+let vs=null;
+const vsRef=(path)=>vs.F.d.ref(vs.F.db,'rooms/'+vs.code+(path?'/'+path:''));
+const vsAv=q=>avOf({emoji:ANIMALS.includes(q.emoji)?q.emoji:'🙂',eq:CHI[q.eq]?q.eq:null});
+const vsMeObj=p=>({name:p.name.slice(0,8),emoji:p.emoji,eq:p.eq||'',lv:lvOf(p.xp),score:0,done:false});
+const vsPlayers=r=>Object.entries((r&&r.players)||{}).filter(([,q])=>q&&q.name);
+function vsDisarm(){(vs&&vs.od||[]).forEach(o=>{try{o.cancel()}catch(e){}});if(vs)vs.od=[]}
+function vsArmLobby(){vsDisarm();const d=vs.F.d,o=[];const a=d.onDisconnect(vsRef('players/'+vs.pid));a.remove();o.push(a);
+  if(vs.host){const b=d.onDisconnect(vsRef());b.remove();o.push(b)}vs.od=o}
+function vsArmPlay(){vsDisarm();const a=vs.F.d.onDisconnect(vsRef('players/'+vs.pid));a.update({done:true,gone:true});vs.od=[a]}
+function vsCleanup(){
+  if(!vs)return;const v=vs;
+  try{v.unsub&&v.unsub();v.unsubOff&&v.unsubOff()}catch(e){}
+  vsDisarm();clearTimeout(v.wt);clearInterval(v.cdIv);
+  $('vsbar').hidden=true;vs=null;
+  if(v.prevWorld)applyWorld(v.prevWorld);renderBar();
+}
+async function vsLeave(){
+  if(!vs)return showHome();
+  const v=vs,room=v.room,mine=vsRef('players/'+v.pid),whole=vsRef(),
+    rest=vsPlayers(room).filter(([id,q])=>id!==v.pid&&!q.gone).length,d=v.F.d;
+  const killRoom=rest===0||(v.host&&(v.phase==='lobby'||v.phase==='result'));
+  vsCleanup();showHome();
+  try{await TMO(killRoom?d.remove(whole):d.remove(mine),6000)}catch(e){}
+}
+function vsEndMsg(msg){
+  vsCleanup();overlay.hidden=false;card.classList.remove('home');
+  card.innerHTML=`<h2>⚔️ 친구 대결</h2><p>${msg}</p><div class="row"><button class="btn" id="vhome">🏠 홈</button></div>`;
+  $('vhome').onclick=showHome;$('vhome').focus();
+}
+function showVsMenu(err){
+  const p=me();if(!p)return showPicker();
+  overlay.hidden=false;card.classList.remove('home');
+  card.innerHTML=`<h2>⚔️ 친구 대결</h2>
+    <p style="font-size:17px;margin:2px 0">같은 판을 동시에 하고,<br>점수가 높은 사람이 이겨요!</p>
+    <div class="row"><button class="btn" id="vmk">🏠 방 만들기</button></div>
+    <p style="margin:14px 0 4px;font-size:17px">친구 방에 들어가기</p>
+    <div class="form"><input id="vcode" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="방 코드 4자리" autocomplete="off"></div>
+    <div class="err" id="verr">${err||''}</div>
+    <div class="row"><button class="btn blue" id="vback">돌아가기</button><button class="btn blue" id="vjn">들어가기</button></div>
+    <p style="font-size:13px;color:var(--dirt);line-height:1.4">🔒 이름·캐릭터·점수만 전달돼요 (실명 대신 별명을 써요).<br>코드를 아는 친구만 들어올 수 있고, 인터넷이 필요해요.</p>`;
+  const busy=b=>['vmk','vjn','vback'].forEach(i=>{$(i).disabled=b});
+  $('vback').onclick=showHome;
+  $('vmk').onclick=async()=>{initCtx();busy(true);$('verr').textContent='방을 만드는 중…';
+    try{await vsCreate()}catch(e){vs=null;showVsMenu(vsErrTxt(e))}};
+  const join=async()=>{const c=$('vcode').value.trim();
+    if(!/^\d{4}$/.test(c)){$('verr').textContent='숫자 4자리를 써 주세요!';return}
+    initCtx();busy(true);$('verr').textContent='들어가는 중…';
+    try{await vsJoin(c)}catch(e){vs=null;showVsMenu(e&&e.vs?e.message:vsErrTxt(e))}};
+  $('vjn').onclick=join;$('vcode').addEventListener('keydown',e=>{if(e.key==='Enter')join()});
+  $('vcode').focus();
+}
+async function vsCreate(){
+  const p=me(),F=await TMO(fbLoad());let code=null;
+  for(let i=0;i<8&&!code;i++){
+    const c=String(1000+Math.floor(Math.random()*9000)),s=await TMO(F.d.get(F.d.ref(F.db,'rooms/'+c)));
+    if(!s.exists()||(Date.now()-(s.val().createdAt||0))>3*3600*1000)code=c;
+  }
+  if(!code)throw new Error('busy');
+  const pid=vsPid(p);
+  vs={code,pid,host:true,F,phase:'lobby',prevWorld:curWorld,off:0,room:null,od:[]};
+  await TMO(F.d.set(vsRef(),{host:pid,createdAt:F.d.serverTimestamp(),world:curWorld,seed:Math.floor(Math.random()*2147483647),status:'lobby',players:{[pid]:vsMeObj(p)}}));
+  vsListen();
+}
+async function vsJoin(code){
+  const p=me(),F=await TMO(fbLoad()),s=await TMO(F.d.get(F.d.ref(F.db,'rooms/'+code)));
+  const bad=m=>{const e=new Error(m);e.vs=1;return e};
+  if(!s.exists())throw bad('그런 방이 없어요. 코드를 다시 봐요!');
+  const r=s.val();
+  if(r.status!=='lobby')throw bad('벌써 시작했어요');
+  if(vsPlayers(r).length>=4)throw bad('방이 꽉 찼어요 (4명까지)');
+  const pid=vsPid(p);
+  vs={code,pid,host:false,F,phase:'lobby',prevWorld:curWorld,off:0,room:null,od:[]};
+  await TMO(F.d.update(vsRef('players'),{[pid]:vsMeObj(p)}));
+  vsListen();
+}
+const vsPid=p=>p.id+Math.random().toString(36).slice(2,5);
+function vsListen(){
+  const d=vs.F.d;
+  vs.unsubOff=d.onValue(d.ref(vs.F.db,'.info/serverTimeOffset'),s=>{if(vs)vs.off=s.val()||0});
+  vs.unsub=d.onValue(vsRef(),s=>vsOnRoom(s.val()));
+  vsArmLobby();
+}
+function vsOnRoom(room){
+  if(!vs)return;
+  if(!room){if(vs.phase==='result'||vs.phase==='left')return;return vsEndMsg(vs.host?'방이 없어졌어요':'방장이 나갔어요')}
+  vs.room=room;vs.host=room.host===vs.pid;
+  if(vs.phase==='lobby'){if(room.status==='play'&&room.startAt)return vsCountdown(room);showVsLobby()}
+  else if(vs.phase==='play')vsBar();
+  else if(vs.phase==='wait')vsCheckDone();
+  else if(vs.phase==='result'&&room.status==='lobby'){vs.phase='lobby';vs.fin=false;vsArmLobby();showVsLobby()}
+}
+function showVsLobby(){
+  const r=vs.room,pl=vsPlayers(r),w=WORLDS[r.world]||WORLDS.grass;
+  overlay.hidden=false;card.classList.remove('home');
+  card.innerHTML=`<h2>⚔️ 친구 대결</h2>
+    <p style="margin:0;font-size:16px;color:var(--dirt)">친구에게 이 코드를 알려 줘요</p>
+    <div class="big" style="letter-spacing:8px;margin:0">${esc(vs.code)}</div>
+    ${vs.host?`<div class="pre">${WORLD_IDS.map(id=>`<button class="tog${id===r.world?' on':''}" data-vw="${id}" aria-label="${WORLDS[id].nm}">${WORLDS[id].ic}</button>`).join('')}</div>`:''}
+    <p style="font-size:18px;margin:2px 0">${w.ic} ${w.nm}</p>
+    <ul class="vsl">${pl.map(([id,q])=>`<li class="${id===vs.pid?'me':''}"><span class="av">${vsAv(q)}</span><span class="nm">${esc(q.name)}</span><span class="lvchip">Lv.${+q.lv||1}</span>${id===r.host?'<span style="font-size:15px">👑</span>':''}</li>`).join('')}</ul>
+    <p style="font-size:14px;color:var(--dirt);margin:4px 0">${pl.length}/4명 · 아이템은 쉬어요 · 이기면 ✨+20 🪙+3</p>
+    ${vs.host?'':'<p style="font-size:15px;margin:4px 0">방장이 시작하면 바로 시작해요!</p>'}
+    <div class="row"><button class="btn blue" id="vleave">나가기</button>${vs.host?`<button class="btn" id="vgo" ${pl.length<2?'disabled':''}>${pl.length<2?'친구를 기다려요':'시작!'}</button>`:''}</div>`;
+  card.querySelectorAll('[data-vw]').forEach(b=>b.onclick=()=>{vs.F.d.update(vsRef(),{world:b.dataset.vw}).catch(()=>{})});
+  $('vleave').onclick=vsLeave;
+  const g=$('vgo');if(g)g.onclick=()=>{if(pl.length<2)return;g.disabled=true;
+    vs.F.d.update(vsRef(),{status:'play',startAt:Date.now()+(vs.off||0)+4000}).catch(()=>{g.disabled=false})};
+}
+function vsCountdown(room){
+  vs.phase='count';vsArmPlay();
+  const wid=WORLDS[room.world]?room.world:'grass',w=WORLDS[wid];applyWorld(wid);
+  const t0=room.startAt-(vs.off||0);overlay.hidden=false;card.classList.remove('home');
+  vs.cd=null;
+  vs.cdIv=setInterval(()=>{
+    if(!vs||vs.phase!=='count'){clearInterval(vs&&vs.cdIv);return}
+    const left=t0-Date.now();
+    if(left<=0){clearInterval(vs.cdIv);vs.phase='play';start(true);return}
+    const n=Math.ceil(left/1000);
+    if(n!==vs.cd){vs.cd=n;card.innerHTML=`<h2>⚔️ 준비!</h2><div class="big" style="font-size:96px;margin:0">${Math.min(n,9)}</div><p>${w.ic} ${w.nm}</p><p style="font-size:15px;color:var(--dirt)">두더지를 많이 잡아요!</p>`;tone(n>1?440:660,.12,'triangle',.1)}
+  },80);
+}
+function vsBar(){
+  if(!vs||!vs.room)return;
+  $('vsbar').innerHTML=vsPlayers(vs.room).map(([id,q])=>({id,q,s:id===vs.pid?score:(+q.score||0)})).sort((a,b)=>b.s-a.s)
+    .map(o=>`<span class="${o.id===vs.pid?'me':''}">${vsAv(o.q)} ${esc(o.q.name)} <b>${o.s}</b></span>`).join('');
+}
+function vsFinish(xp){
+  vs.phase='wait';vs.xp=xp;vs.fin=false;$('vsbar').hidden=true;
+  overlay.hidden=false;card.classList.remove('home');
+  card.innerHTML=`<h2>끝!</h2><div class="big">${score}점</div><p>친구들이 끝나길 기다려요…</p>`;
+  vs.wt=setTimeout(vsResult,9000);
+  vs.F.d.update(vsRef('players/'+vs.pid),{score,done:true}).catch(()=>{});
+  vsCheckDone();
+}
+function vsCheckDone(){const pl=vsPlayers(vs&&vs.room);if(pl.length&&pl.every(([,q])=>q.done))vsResult()}
+function vsResult(){
+  if(!vs||vs.fin)return;vs.fin=true;clearTimeout(vs.wt);vs.phase='result';
+  const p=me(),room=vs.room||{};
+  const list=vsPlayers(room).map(([id,q])=>({id,q,s:id===vs.pid?score:(+q.score||0)})).sort((a,b)=>b.s-a.s);
+  const top=list.length?list[0].s:0,winners=list.filter(o=>o.s===top&&top>0),win=list.length>=2&&top>0&&score===top;
+  let xp=vs.xp,bonus='';
+  if(p&&xp&&win){
+    const r2=addXp(p,20);p.coins+=3;
+    xp.r={l0:xp.r.l0,l1:r2.l1,c:xp.r.c+r2.c,e:xp.r.e+r2.e};xp.gain+=20;xp.b1=lvProg(p.xp);
+    bonus='<p class="lvup" style="margin:6px 0">🏆 승리 보너스 ✨+20 · 🪙+3</p>';
+  }
+  if(p){save();refreshTop()}
+  fanfare(win?3:1);
+  const rank=o=>list.filter(x=>x.s>o.s).length;
+  const msg=list.length<2?'친구가 나갔어요':win?(winners.length>1?'🤝 공동 1등!':'🏆 이겼어요!'):'아쉬워요! 다음엔 이길 수 있어요';
+  card.innerHTML=`<h2>${msg}</h2><div class="big">${score}점</div>
+    <ol class="rank">${list.map(o=>`<li class="${o.id===vs.pid?'me':''}"><span class="medal">${MEDALS[rank(o)]||rank(o)+1}</span><span>${vsAv(o.q)}</span><span class="nm">${esc(o.q.name)}</span><span class="pt">${o.s}점</span></li>`).join('')}</ol>
+    ${bonus}${xp?xpBlock(xp):''}
+    <div class="row"><button class="btn blue" id="vhome">🏠 나가기</button>${vs.host?'<button class="btn" id="vagain">🔁 한 번 더!</button>':''}</div>
+    ${vs.host?'':'<p style="font-size:14px;color:var(--dirt)">방장이 다시 시작하면 돌아가요</p>'}`;
+  if(xp)animXp(xp);
+  $('vhome').onclick=vsLeave;
+  const a=$('vagain');if(a)a.onclick=vsRematch;
+}
+async function vsRematch(){
+  const upd={status:'lobby',startAt:null,seed:Math.floor(Math.random()*2147483647)};
+  vsPlayers(vs.room).forEach(([id,q])=>{if(q.gone)upd['players/'+id]=null;else{upd['players/'+id+'/score']=0;upd['players/'+id+'/done']=false}});
+  try{await TMO(vs.F.d.update(vsRef(),upd))}catch(e){}
+}
+
 /* ---------- 게임 ---------- */
-function start(){
+function start(v){
   if(!me())return showPicker();
-  if(!ctx){try{ctx=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}
-  const p=me();let total=30;
+  initCtx();
+  const p=me(),vm=v===true&&!!vs;let total=30;
   catches=0;earned=0;gameXp=0;gameRate=coinRate(lvOf(p.xp));usedItem=false;bigOn=false;slowUntil=0;iceUntil=0;
-  if(selPre.big&&p.items.big>0){p.items.big--;bigOn=true;usedItem=true}
-  if(selPre.time&&p.items.time>0){p.items.time--;total=35;usedItem=true}
-  selPre={big:false,time:false};save();
+  if(!vm){
+    if(selPre.big&&p.items.big>0){p.items.big--;bigOn=true;usedItem=true}
+    if(selPre.time&&p.items.time>0){p.items.time--;total=35;usedItem=true}
+    selPre={big:false,time:false};save();
+  }
   score=0;time=total;scoreEl.textContent=0;timeEl.textContent=total;
   field.classList.remove('slowmo','icy','zap','quake');
   holes.forEach(h=>{clearTimeout(h.t);h.kind=null;h.hit=false;h.el.classList.remove('up','danger')});
   overlay.hidden=true;playing=true;$('whoAv').classList.toggle('cheer',!!p.eq);tone(520,.1);renderBar();
-  timers.push(setTimeout(popUp,500));
-  W().skulls.forEach(([a,b])=>timers.push(setTimeout(spawnSkull,(a+Math.random()*(b-a))*1000)));
+  if(vm){
+    vs.sent=0;vs.fin=false;$('vsbar').hidden=false;vsBar();
+    buildSched(vs.room.seed,vs.room.world).forEach(e=>timers.push(setTimeout(()=>{if(playing)show(holes[e.h],e.k,e)},e.t)));
+    timers.push(setInterval(()=>{if(!playing||!vs)return;vsBar();if(score!==vs.sent){vs.sent=score;vs.F.d.update(vsRef('players/'+vs.pid),{score}).catch(()=>{})}},400));
+  }else{
+    timers.push(setTimeout(popUp,500));
+    W().skulls.forEach(([a,b])=>timers.push(setTimeout(spawnSkull,(a+Math.random()*(b-a))*1000)));
+  }
   const tick=setInterval(()=>{time--;timeEl.textContent=time;if(time<=5&&time>0)tone(440,.06,'sine');if(time<=0){clearInterval(tick);end()}},1000);
   timers.push(tick);
+}
+function xpBlock(xp){return `<p class="earn" style="margin:2px 0">✨ 경험치 +${xp.gain} <small style="font-size:14px;color:var(--dirt)">(두더지 ${gameXp} · 완주 5${xp.sb?` · 별 ${xp.sb*10}`:''}${xp.gain>gameXp+5+xp.sb*10?' · 승리 20':''})</small></p>
+    <div class="xpbar"><i id="xpfill" style="width:${xp.b0.pct}%"></i></div>
+    <p style="font-size:16px;margin:0">Lv.${xp.b1.l}${xp.b1.max?' 👑 MAX':` · ${xp.b1.cur}/${xp.b1.need}`}</p>
+    ${xp.r.l1>xp.r.l0?`<p class="lvup">🎉 레벨 업! Lv.${xp.r.l0} → Lv.${xp.r.l1}<br>🪙+${xp.r.c}${xp.r.e?` · 🥚+${xp.r.e}`:''}${xp.r.l1>=MAXLV?' · 👑 왕관!':''}</p>`:''}`}
+function animXp(xp){
+  setTimeout(()=>{const f=$('xpfill');if(!f)return;
+    if(xp.r.l1>xp.r.l0){f.style.width='100%';setTimeout(()=>{const g=$('xpfill');if(!g)return;g.style.transition='none';g.style.width='0%';void g.offsetWidth;g.style.transition='';g.style.width=xp.b1.pct+'%'},950)}
+    else f.style.width=xp.b1.pct+'%'},80);
 }
 function end(){
   playing=false;timers.forEach(t=>{clearTimeout(t);clearInterval(t)});timers=[];
   holes.forEach(hide);field.classList.remove('slowmo','icy');slowUntil=iceUntil=0;$('whoAv').classList.remove('cheer','yay');
-  const p=me();let msg='잘했어요!',xp=null;
+  const p=me(),isVs=!!vs&&vs.phase==='play';let msg='잘했어요!',xp=null;
   if(p){p.plays=(p.plays||0)+1;
-    const before=wBest(p),sb=Math.max(0,starCount(score)-starCount(before));
-    if(score>before&&score>0){p.bests[curWorld]=score;p.bestItems[curWorld]=usedItem;p.best=Math.max(p.best||0,score);msg=starCount(score)>starCount(before)?'별을 땄어요! 🌟':'새 기록이에요! 🎉'}
-    else if(score>=25)msg='두더지 대장! 👑';
+    const before=wBest(p),sb=isVs?0:Math.max(0,starCount(score)-starCount(before));
+    if(!isVs){
+      if(score>before&&score>0){p.bests[curWorld]=score;p.bestItems[curWorld]=usedItem;p.best=Math.max(p.best||0,score);msg=starCount(score)>starCount(before)?'별을 땄어요! 🌟':'새 기록이에요! 🎉'}
+      else if(score>=25)msg='두더지 대장! 👑';
+    }
     const gain=gameXp+5+sb*10,b0=lvProg(p.xp),r=addXp(p,gain);
     xp={gain,sb,r,b0,b1:lvProg(p.xp)};
     save();refreshTop();}
+  if(isVs)return vsFinish(xp);
   [523,659,784].forEach((f,k)=>setTimeout(()=>tone(f,.18,'triangle',.1),k*130));
   if(xp&&xp.r.l1>xp.r.l0)[784,988,1175,1568].forEach((f,k)=>setTimeout(()=>tone(f,.14,'square',.06),500+k*110));
   const ranked=[...players].sort((a,b)=>wBest(b)-wBest(a)).slice(0,5);
   const list=ranked.map((q,i)=>`<li class="${q.id===cur?'me':''}"><span class="medal">${MEDALS[i]||i+1}</span><span>${avOf(q)}</span><span class="nm">${esc(q.name)}</span><span class="pt">${wBest(q)}점${q.bestItems&&q.bestItems[curWorld]?' ⚡':''}</span></li>`).join('');
-  const xpHtml=xp?`<p class="earn" style="margin:2px 0">✨ 경험치 +${xp.gain} <small style="font-size:14px;color:var(--dirt)">(두더지 ${gameXp} · 완주 5${xp.sb?` · 별 ${xp.sb*10}`:''})</small></p>
-    <div class="xpbar"><i id="xpfill" style="width:${xp.b0.pct}%"></i></div>
-    <p style="font-size:16px;margin:0">Lv.${xp.b1.l}${xp.b1.max?' 👑 MAX':` · ${xp.b1.cur}/${xp.b1.need}`}</p>
-    ${xp.r.l1>xp.r.l0?`<p class="lvup">🎉 레벨 업! Lv.${xp.r.l0} → Lv.${xp.r.l1}<br>🪙+${xp.r.c}${xp.r.e?` · 🥚+${xp.r.e}`:''}${xp.r.l1>=MAXLV?' · 👑 왕관!':''}</p>`:''}`:'';
   overlay.hidden=false;card.classList.remove('home');
   card.innerHTML=`<h2>${msg}</h2>
     <p>${W().ic} ${W().nm} · ${p?avOf(p)+' '+esc(p.name):''}</p>
     <div class="big">${score}점</div>
     <p style="font-size:26px;margin:0">${starsHtml(starCount(score))}</p>
     <p class="earn">잡은 두더지 ${catches}마리 → 🪙+${earned}</p>
-    ${xpHtml}
+    ${xp?xpBlock(xp):''}
     ${p?`<p style="font-size:16px;color:var(--dirt)">내 코인 🪙${p.coins}${p.eggs>0?` · 안 깬 알 🥚${p.eggs}`:''}</p>`:''}
     ${players.length>1?`<p style="font-size:18px">🏆 ${W().nm} 친구들 순위</p><ol class="rank">${list}</ol>`:''}
     <div class="row"><button class="btn blue" id="home">🏠 홈</button><button class="btn blue" id="shop">🏪 상점</button><button class="btn" id="go">한 번 더!</button></div>`;
-  if(xp)setTimeout(()=>{const f=$('xpfill');if(!f)return;
-    if(xp.r.l1>xp.r.l0){f.style.width='100%';setTimeout(()=>{const g=$('xpfill');if(!g)return;g.style.transition='none';g.style.width='0%';void g.offsetWidth;g.style.transition='';g.style.width=xp.b1.pct+'%'},950)}
-    else f.style.width=xp.b1.pct+'%'},80);
+  if(xp)animXp(xp);
   $('go').onclick=()=>p&&hasPre(p)?showIntro():start();$('home').onclick=showHome;$('shop').onclick=()=>showShop(null,showIntro);$('go').focus();
 }
 $('who').onclick=()=>{if(!playing)showPicker()};
